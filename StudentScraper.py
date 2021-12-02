@@ -227,9 +227,11 @@ def parseHTML(studentDetails, name):
         elif mode == "ha":
             studentHomeAddress.append(line.strip())
 
+    #join address lines
     studentCampusAddress = " ".join(studentCampusAddress)
     studentHomeAddress = " ".join(studentHomeAddress)
 
+    #null checks
     if studentHomePhone == 0:
         studentHomePhone = "NULL"
     if studentCampusPhone == 0:
@@ -241,15 +243,13 @@ def parseHTML(studentDetails, name):
     if len(studentHomeAddress.strip()) == 0:
         studentHomeAddress = "NULL"
 
+    #comma checks
+    studentHomeAddress = studentHomeAddress.replace(",", "")
+    studentCampusAddress = studentCampusAddress.replace(",", "")
 
-    print("--------------------------------------------")
-    print("Name:",studentName)
-    print("Email:",studentEmail)
-    print("Home Phone:", studentHomePhone)
-    print("Campus Phone:", studentCampusPhone)
-    print("Home Address:", studentHomeAddress)
-    print("Campus Address:", studentCampusAddress)
-
+    #write to file
+    print(studentName,",",studentEmail,",",studentHomePhone,",",studentCampusPhone,",",studentHomeAddress,",",studentCampusAddress,sep = "")
+    
 def parseNonAscii(text):
     return re.sub(r'[^\x00-\x7F]+',' ', text)
 
