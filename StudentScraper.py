@@ -140,4 +140,14 @@ def elementExists(driver, id):
     return True
 
 if __name__ == "__main__":
-    main()
+    #main()
+    alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
+    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
+    'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+    for i in range(0,26):
+        for j in range(0,26):
+            for k in range(0,26):
+                for m in range(0,26):
+                    print("First:",alphas[i],alphas[j],
+                        ", Last:",alphas[k],alphas[m], sep = '')
