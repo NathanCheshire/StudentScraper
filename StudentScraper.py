@@ -168,7 +168,8 @@ def parseHTML(studentDetails, name):
     #user attributes
     studentName = name
     studentEmail = "NULL"
-    studentPhone = []
+    studentHomePhone = 0
+    studentCampusPhone = 0
     studentCampusAddress = []
     studentHomeAddress = []
    
@@ -211,14 +212,19 @@ def parseHTML(studentDetails, name):
         if mode == "email" and line.strip() != "Email":
             studentEmail = line.strip()
         elif mode == "phone" and line.strip() != "Phone":
-            studentPhone.append(line.strip())
+            if "Campus" in line:
+                studentCampusPhone = ''.join(c for c in line if c.isdigit())
+            else:
+                studentHomePhone = ''.join(c for c in line if c.isdigit())
         elif mode == "ca":
             studentCampusAddress.append(line.strip())
         elif mode == "ha":
             studentHomeAddress.append(line.strip())
 
+    #todo check for valid data and set to null if not valid
+
     student = Student(studentName, studentEmail, 
-        studentPhone, " ".join(studentCampusAddress), " ".join(studentHomeAddress))
+        studentHomePhone, studentCampusPhone, " ".join(studentCampusAddress), " ".join(studentHomeAddress))
     
     print(student.toString())
 
