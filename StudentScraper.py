@@ -10,8 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-PATH = "c:/users/nathan/downloads/chromedriver.exe"
-
+PATH = "chromedriver.exe"
 
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
 INJECTION_PASSWORD = open("logindata.txt").read().split(',')[1]
@@ -21,6 +20,10 @@ PASSWORD_ID = "password"
 BUTTON_ID = "btn btn-block btn-submit"
 
 PUSH_TIMEOUT = 30
+
+alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
+                'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
+                'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 def main():
     try:
@@ -67,46 +70,56 @@ def main():
                 EC.presence_of_element_located((By.ID, directoryID)))
             print("Directory element loaded")
 
-            #todo loop through these changing stuff perhaps to get everyone possible
-            # check if nothing is returned and continue if so, 
-            # otherwise continue for pages and such
-            first = 'Nathan'
-            last = ''
+            #select student radio button
+            driver.find_element(By.XPATH, "//input[@value='s']").click()
 
-            firstSearchFieldID = 'fld1_search_term'
-            elem = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, firstSearchFieldID)))
-            elem.clear()
-            elem.send_keys(last)
+            firsts = ["na"]
+            lasts = ["ch"]
 
-            secondSearchFieldID = 'fld2_search_term'
-            elem = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, secondSearchFieldID)))
-            elem.clear()
-            elem.send_keys(first)
+            for first in firsts:
+                for last in lasts:
+                    firstSearchFieldID = 'fld1_search_term'
+                    elem = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.ID, firstSearchFieldID)))
+                    elem.clear()
+                    elem.send_keys(last)
 
-            #Submit search based on provided first and last name
-            searchText = "submit"
-            myElem = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.ID, searchText)))
-            myElem.click()
+                    secondSearchFieldID = 'fld2_search_term'
+                    elem = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.ID, secondSearchFieldID)))
+                    elem.clear()
+                    elem.send_keys(first)
 
-            countElement = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.ID, 'count')))
-            elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
-            print('Records returned:', elementCount)
-            numPages = int(math.ceil(elementCount / 10.0))
-            print('Number of pages:',numPages)
+                    #Submit search based on provided first and last name
+                    searchText = "submit"
+                    myElem = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, searchText)))
+                    myElem.click()
 
-            for page in range(numPages + 1):  
-                #get information for each person on current page
-                for person in driver.find_elements(By.CLASS_NAME, "person"):
-                    printPersonDetails(driver, person)
+                    countElement = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, 'count')))
+                    elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
+                    print('Records returned:', elementCount)
+                    numPages = int(math.ceil(elementCount / 10.0))
+                    print('Number of pages:',numPages)
+
+                    #if pages is greater than 1 then we need to go two above it
+                    addative = 1 if numPages == 1 else 2
+
+                    page = 0
+                    while page < numPages + addative:
+                        #get information for each person on current page
+                        for person in driver.find_elements(By.CLASS_NAME, "person"):
+                            printPersonDetails(driver, person)
 
 
-                if elementExists(driver, 'pagenums'):
-                    driver.execute_script(f"getDetails({page})")  
-                time.sleep(1) 
+                        if elementExists(driver, 'pagenums'):
+                            driver.execute_script(f"getDetails({page})") 
+                            page += 1
+
+                        time.sleep(1) 
+                    time.sleep(1)
+                    print('Continuing with next input combiation')
 
             #debugging sleep
             time.sleep(600)
@@ -139,15 +152,14 @@ def elementExists(driver, id):
         return False
     return True
 
-if __name__ == "__main__":
-    #main()
-    alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
-    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
-    'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-
+def generatePairs():
     for i in range(0,26):
-        for j in range(0,26):
-            for k in range(0,26):
-                for m in range(0,26):
-                    print("First:",alphas[i],alphas[j],
-                        ", Last:",alphas[k],alphas[m], sep = '')
+                for j in range(0,26):
+                    for k in range(0,26):
+                        for m in range(0,26):
+                            first = alphas[i] + alphas[j]
+                            last = alphas[k] + alphas[m]
+
+if __name__ == "__main__":
+    main()
+                          
