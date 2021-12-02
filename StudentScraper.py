@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
 
 PATH = "chromedriver.exe"
 
@@ -20,6 +21,8 @@ PASSWORD_ID = "password"
 BUTTON_ID = "btn btn-block btn-submit"
 
 PUSH_TIMEOUT = 30
+PAGE_SLEEP_TIMEOUT = 1
+QUERRY_SLEEP_TIMEOUT = 2.5
 
 alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
                 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
@@ -27,15 +30,14 @@ alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
 
 def main():
     try:
-        print("Begining sequence")
+        print("Begining scraping sequence")
         exe = os.path.exists(PATH)
 
         if exe:
-            print("Executable found, continuing")
-            WEBSITE = "https://my.msstate.edu/"
+            print("Executable found")
 
             driver = webdriver.Chrome()
-            driver.get(WEBSITE)
+            driver.get("https://my.msstate.edu/")
 
             elem = driver.find_element(By.ID,USERNAME_ID)
             elem.clear()
@@ -72,9 +74,9 @@ def main():
             #select student radio button
             driver.find_element(By.XPATH, "//input[@value='s']").click()
 
-            #TODO: these will be generated and not explicitly defined lists
-            firsts = ["na","ma"]
-            lasts = ["ch","du"]
+            #generate permutation lists
+            firsts = generatePairsList()
+            lasts = generatePairsList()
 
             for first in firsts:
                 for last in lasts:
@@ -124,31 +126,31 @@ def main():
                             #inc pages
                             page += 1
 
-                            #timeout between pages
-                            time.sleep(1) 
-                        #timeout between queries
-                        time.sleep(3)
-                        print('Continuing with next input combiation')
+                            time.sleep(PAGE_SLEEP_TIMEOUT) 
+                        time.sleep(QUERRY_SLEEP_TIMEOUT)
+
+                        print('Continuing with next input permutation')
                     except:
                         continue
 
-            print('All permutations from first and last have been ran, exiting scraper')
+            print('All permutations from first and last have been executed; exiting scraper')
         else:
-            print("Executable not found")
+            print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
     except Exception as e:
         print("Exception:",e)
 
 def printPersonDetails(driver, person):
-    #enter person
+    #Enter person details section
     person.send_keys(Keys.ENTER)
 
+    #wait for details section ot be loaded
     detailsID = 'details-section'
-    myElem = WebDriverWait(driver, 10).until(
+    detailsElement = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, detailsID)))
 
-    parseHTML(myElem.get_attribute('innerHTML'))
+    parseHTML(detailsElement.get_attribute('innerHTML'))
 
-    #press back
+    #go back to query results
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located ((By.ID, 'back'))).send_keys(Keys.ENTER)
 
@@ -161,16 +163,68 @@ def elementExists(driver, id):
 
 #todo parse out information and store into excell sheet
 def parseHTML(studentDetails):
-    print(studentDetails)
+    #todo let's parse this into a user object that we can then write as a csv
+   
+    soup = BeautifulSoup(studentDetails, features="html.parser")
+    pretty = soup.prettify()
+    lines = pretty.split('\n')
+
+    mode = "none"
+    
+    for line in lines:
+        #parse away b tags
+        if "<b>" in line or "</b>" in line or "<b/>" in line:
+            continue
+        #parse away break tags
+        elif "<br>" in line or "<br/>" in line or "</br>" in line:
+            continue
+        #parse away a tags
+        elif "</a>" in line or "<a" in line or "<a/>" in line:
+            continue
+
+        line = parseNonAscii(line)
+
+        if line.strip() == "Email":
+            mode = "email"
+            continue
+        elif line.strip() == "Phone":
+            mode = "phone"
+            continue
+        elif line.strip() == "Campus Address":
+            mode = "ca"
+            continue
+        elif line.strip() == "Home Address":
+            mode = "ha"
+            continue
+
+        #precautionary continue for empty lines
+        if len(line.strip()) < 3:
+            continue
+
+        if mode == "email" and line.strip() != "Email":
+            print("Email:",line)
+        elif mode == "phone" and line.strip() != "Phone":
+            print("Phone:",line)
+        elif mode == "ca":
+            print("Campus Address Part:",line)
+        elif mode == "ha":
+            print("Home Address Part:",line)
+        
+
     print('----------------------------')
 
-def generatePairs():
+def parseNonAscii(text):
+    return re.sub(r'[^\x00-\x7F]+',' ', text)
+
+def generatePairsList():
+    ret = []
+
     for i in range(0,26):
-                for j in range(0,26):
-                    for k in range(0,26):
-                        for m in range(0,26):
-                            first = alphas[i] + alphas[j]
-                            last = alphas[k] + alphas[m]
+        for j in range(0,26):
+            ret.append(alphas[i] + alphas[j])
+
+    return ret
+                    
 
 if __name__ == "__main__":
     main()
