@@ -13,5 +13,4 @@ class Student:
         self.homeAddress = homeAddress
     
     def toString(self):
-        #todo null checks
         return (f'{self.name},{self.email},{self.phone},{self.campusAddress},{self.homeAddress}')

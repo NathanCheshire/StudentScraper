@@ -218,11 +218,9 @@ def parseHTML(studentDetails, name):
             studentHomeAddress.append(line.strip())
 
     student = Student(studentName, studentEmail, 
-        studentPhone, studentCampusAddress, studentHomeAddress)
+        studentPhone, " ".join(studentCampusAddress), " ".join(studentHomeAddress))
     
     print(student.toString())
-
-    print('----------------------------')
 
 def parseNonAscii(text):
     return re.sub(r'[^\x00-\x7F]+',' ', text)
