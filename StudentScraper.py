@@ -11,8 +11,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
-from Student import Student
-
 PATH = "chromedriver.exe"
 
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
@@ -110,9 +108,11 @@ def main():
                         countElement = WebDriverWait(driver, 10).until(
                             EC.element_to_be_clickable((By.ID, 'count')))
                         elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
+                        print("---------------------------------")
                         print('Records returned:', elementCount)
                         numPages = int(math.ceil(elementCount / 10.0))
                         print('Number of pages:',numPages)
+                        print("---------------------------------")
 
                         #for all pages returned from this query
                         page = 0
@@ -221,12 +221,28 @@ def parseHTML(studentDetails, name):
         elif mode == "ha":
             studentHomeAddress.append(line.strip())
 
-    #todo check for valid data and set to null if not valid
+    studentCampusAddress = " ".join(studentCampusAddress)
+    studentHomeAddress = " ".join(studentHomeAddress)
 
-    student = Student(studentName, studentEmail, 
-        studentHomePhone, studentCampusPhone, " ".join(studentCampusAddress), " ".join(studentHomeAddress))
+    if studentHomePhone == 0:
+        studentHomePhone = "NULL"
+    if studentCampusPhone == 0:
+        studentCampusPhone = "NULL"
     
-    print(student.toString())
+    if len(studentCampusAddress.strip()) == 0:
+        studentCampusAddress = "NULL"
+
+    if len(studentHomeAddress.strip()) == 0:
+        studentHomeAddress = "NULL"
+
+
+    print("--------------------------------------------")
+    print("Name:",studentName)
+    print("Email:",studentEmail)
+    print("Home Phone:", studentHomePhone)
+    print("Campus Phone:", studentCampusPhone)
+    print("Home Address:", studentHomeAddress)
+    print("Campus Address:", studentCampusAddress)
 
 def parseNonAscii(text):
     return re.sub(r'[^\x00-\x7F]+',' ', text)
