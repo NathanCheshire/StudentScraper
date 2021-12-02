@@ -109,10 +109,15 @@ def main():
                             EC.element_to_be_clickable((By.ID, 'count')))
                         elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
                         print("---------------------------------")
+                        print("Querry: first =",first,"last =",last)
                         print('Records returned:', elementCount)
                         numPages = int(math.ceil(elementCount / 10.0))
                         print('Number of pages:',numPages)
                         print("---------------------------------")
+
+                        #immediately continue of query returned no results
+                        if elementCount == 0:
+                            continue
 
                         #for all pages returned from this query
                         page = 0
@@ -129,6 +134,7 @@ def main():
                             page += 1
 
                             time.sleep(PAGE_SLEEP_TIMEOUT) 
+
                         time.sleep(QUERRY_SLEEP_TIMEOUT)
 
                         print('Continuing with next input permutation')
