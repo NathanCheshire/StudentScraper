@@ -59,14 +59,13 @@ def main():
 
             #wait for push button to load and click it
             pushButtontext = "Send Me a Push"
-            myElem = WebDriverWait(driver, PUSH_TIMEOUT).until(
-                EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]")))
-            myElem.click()
+            WebDriverWait(driver, PUSH_TIMEOUT).until(
+                EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
             print("Push sent")
 
             #wait for directory to load
             directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
-            directory = WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.ID, directoryID)))
             print("Directory element loaded")
 
@@ -74,18 +73,20 @@ def main():
             driver.find_element(By.XPATH, "//input[@value='s']").click()
 
             #TODO: these will be generated and not explicitly defined lists
-            firsts = ["na"]
-            lasts = ["ch"]
+            firsts = ["na","ma"]
+            lasts = ["ch","du"]
 
             for first in firsts:
                 for last in lasts:
                     try:
+                        #inect last name search
                         firstSearchFieldID = 'fld1_search_term'
                         elem = WebDriverWait(driver, 10).until(
                             EC.presence_of_element_located((By.ID, firstSearchFieldID)))
                         elem.clear()
                         elem.send_keys(last)
 
+                        #inject first name search
                         secondSearchFieldID = 'fld2_search_term'
                         elem = WebDriverWait(driver, 10).until(
                             EC.presence_of_element_located((By.ID, secondSearchFieldID)))
@@ -101,6 +102,7 @@ def main():
                         #in case we're changing seraches wait for this to settle
                         time.sleep(1)
 
+                        #Get how many pages were returned for this query
                         countElement = WebDriverWait(driver, 10).until(
                             EC.element_to_be_clickable((By.ID, 'count')))
                         elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
@@ -108,22 +110,23 @@ def main():
                         numPages = int(math.ceil(elementCount / 10.0))
                         print('Number of pages:',numPages)
 
-                        #if pages is greater than 1 then we need to go two above it
-                        addative = 1 if numPages == 1 else 2
-
-                        #todo work on this bodge to save time
-                        # so that we're not repeating any pages
+                        #for all pages returned from this query
                         page = 0
-                        while page < numPages + addative:
+                        while page < numPages + 1:
                             #get information for each person on current page
                             for person in driver.find_elements(By.CLASS_NAME, "person"):
                                 printPersonDetails(driver, person)
 
+                            #if the pagenumber element exists, execute js to go to the next page
                             if elementExists(driver, 'pagenums'):
-                                driver.execute_script(f"getDetails({page})") 
-                                page += 1
+                                driver.execute_script("getDetails(0)") 
+                                
+                            #inc pages
+                            page += 1
 
+                            #timeout between pages
                             time.sleep(1) 
+                        #timeout between queries
                         time.sleep(3)
                         print('Continuing with next input combiation')
                     except:
