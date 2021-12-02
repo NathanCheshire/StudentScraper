@@ -11,6 +11,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
+from Student import Student
+
 PATH = "chromedriver.exe"
 
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
@@ -117,7 +119,7 @@ def main():
                         while page < numPages + 1:
                             #get information for each person on current page
                             for person in driver.find_elements(By.CLASS_NAME, "person"):
-                                printPersonDetails(driver, person)
+                                printPersonDetails(driver, person, person.get_attribute('innerHTML'))
 
                             #if the pagenumber element exists, execute js to go to the next page
                             if elementExists(driver, 'pagenums'):
@@ -139,7 +141,7 @@ def main():
     except Exception as e:
         print("Exception:",e)
 
-def printPersonDetails(driver, person):
+def printPersonDetails(driver, person, personName):
     #Enter person details section
     person.send_keys(Keys.ENTER)
 
@@ -148,7 +150,7 @@ def printPersonDetails(driver, person):
     detailsElement = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, detailsID)))
 
-    parseHTML(detailsElement.get_attribute('innerHTML'))
+    parseHTML(detailsElement.get_attribute('innerHTML'), personName)
 
     #go back to query results
     WebDriverWait(driver, 10).until(
@@ -162,8 +164,13 @@ def elementExists(driver, id):
     return True
 
 #todo parse out information and store into excell sheet
-def parseHTML(studentDetails):
-    #todo let's parse this into a user object that we can then write as a csv
+def parseHTML(studentDetails, name):
+    #user attributes
+    studentName = name
+    studentEmail = "NULL"
+    studentPhone = []
+    studentCampusAddress = []
+    studentHomeAddress = []
    
     soup = BeautifulSoup(studentDetails, features="html.parser")
     pretty = soup.prettify()
@@ -202,14 +209,18 @@ def parseHTML(studentDetails):
             continue
 
         if mode == "email" and line.strip() != "Email":
-            print("Email:",line)
+            studentEmail = line.strip()
         elif mode == "phone" and line.strip() != "Phone":
-            print("Phone:",line)
+            studentPhone.append(line.strip())
         elif mode == "ca":
-            print("Campus Address Part:",line)
+            studentCampusAddress.append(line.strip())
         elif mode == "ha":
-            print("Home Address Part:",line)
-        
+            studentHomeAddress.append(line.strip())
+
+    student = Student(studentName, studentEmail, 
+        studentPhone, studentCampusAddress, studentHomeAddress)
+    
+    print(student.toString())
 
     print('----------------------------')
 

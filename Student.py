@@ -1,9 +1,9 @@
 class Student:
     _name: str
     _email: str
-    _phone: str
-    _campusAddress: str
-    _homeAddress: str
+    _phone: list
+    _campusAddress: list
+    _homeAddress: list
 
     def __init__(self, name, email, phone, campusAddress, homeAddress):
         self.name = name
