@@ -73,56 +73,58 @@ def main():
             #select student radio button
             driver.find_element(By.XPATH, "//input[@value='s']").click()
 
-            firsts = ["na"]
-            lasts = ["ch"]
+            #TODO: these will be generated and not explicitly defined lists
+            firsts = ["aa"]
+            lasts = ["aa","ab"]
 
             for first in firsts:
                 for last in lasts:
-                    firstSearchFieldID = 'fld1_search_term'
-                    elem = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.ID, firstSearchFieldID)))
-                    elem.clear()
-                    elem.send_keys(last)
+                    try:
+                        firstSearchFieldID = 'fld1_search_term'
+                        elem = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.ID, firstSearchFieldID)))
+                        elem.clear()
+                        elem.send_keys(last)
 
-                    secondSearchFieldID = 'fld2_search_term'
-                    elem = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.ID, secondSearchFieldID)))
-                    elem.clear()
-                    elem.send_keys(first)
+                        secondSearchFieldID = 'fld2_search_term'
+                        elem = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.ID, secondSearchFieldID)))
+                        elem.clear()
+                        elem.send_keys(first)
 
-                    #Submit search based on provided first and last name
-                    searchText = "submit"
-                    myElem = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.ID, searchText)))
-                    myElem.click()
+                        #Submit search based on provided first and last name
+                        searchText = "submit"
+                        myElem = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable((By.ID, searchText)))
+                        myElem.click()
 
-                    countElement = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.ID, 'count')))
-                    elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
-                    print('Records returned:', elementCount)
-                    numPages = int(math.ceil(elementCount / 10.0))
-                    print('Number of pages:',numPages)
+                        countElement = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable((By.ID, 'count')))
+                        elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
+                        print('Records returned:', elementCount)
+                        numPages = int(math.ceil(elementCount / 10.0))
+                        print('Number of pages:',numPages)
 
-                    #if pages is greater than 1 then we need to go two above it
-                    addative = 1 if numPages == 1 else 2
+                        #if pages is greater than 1 then we need to go two above it
+                        addative = 1 if numPages == 1 else 2
 
-                    page = 0
-                    while page < numPages + addative:
-                        #get information for each person on current page
-                        for person in driver.find_elements(By.CLASS_NAME, "person"):
-                            printPersonDetails(driver, person)
+                        page = 0
+                        while page < numPages + addative:
+                            #get information for each person on current page
+                            for person in driver.find_elements(By.CLASS_NAME, "person"):
+                                printPersonDetails(driver, person)
 
+                            if elementExists(driver, 'pagenums'):
+                                driver.execute_script(f"getDetails({page})") 
+                                page += 1
 
-                        if elementExists(driver, 'pagenums'):
-                            driver.execute_script(f"getDetails({page})") 
-                            page += 1
+                            time.sleep(1) 
+                        time.sleep(3)
+                        print('Continuing with next input combiation')
+                    except:
+                        continue
 
-                        time.sleep(1) 
-                    time.sleep(1)
-                    print('Continuing with next input combiation')
-
-            #debugging sleep
-            time.sleep(600)
+            print('All permutations from first and last have been ran, exiting scraper')
         else:
             print("Executable not found")
     except Exception as e:
@@ -136,10 +138,7 @@ def printPersonDetails(driver, person):
     myElem = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, detailsID)))
 
-    #this is what you should be parsing and saving to an excel sheet
-    print("-------------------------------")
-    print('Raw HTML:')
-    print(myElem.get_attribute('innerHTML'))
+    parseHTML(myElem.get_attribute('innerHTML'))
 
     #press back
     WebDriverWait(driver, 10).until(
@@ -151,6 +150,10 @@ def elementExists(driver, id):
     except:
         return False
     return True
+
+def parseHTML(studentDetails):
+    print(studentDetails)
+    print('----------------------------')
 
 def generatePairs():
     for i in range(0,26):
