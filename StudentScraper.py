@@ -74,8 +74,8 @@ def main():
             driver.find_element(By.XPATH, "//input[@value='s']").click()
 
             #TODO: these will be generated and not explicitly defined lists
-            firsts = ["aa"]
-            lasts = ["aa","ab"]
+            firsts = ["na"]
+            lasts = ["ch"]
 
             for first in firsts:
                 for last in lasts:
@@ -98,6 +98,9 @@ def main():
                             EC.element_to_be_clickable((By.ID, searchText)))
                         myElem.click()
 
+                        #in case we're changing seraches wait for this to settle
+                        time.sleep(1)
+
                         countElement = WebDriverWait(driver, 10).until(
                             EC.element_to_be_clickable((By.ID, 'count')))
                         elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
@@ -108,6 +111,8 @@ def main():
                         #if pages is greater than 1 then we need to go two above it
                         addative = 1 if numPages == 1 else 2
 
+                        #todo work on this bodge to save time
+                        # so that we're not repeating any pages
                         page = 0
                         while page < numPages + addative:
                             #get information for each person on current page
@@ -151,6 +156,7 @@ def elementExists(driver, id):
         return False
     return True
 
+#todo parse out information and store into excell sheet
 def parseHTML(studentDetails):
     print(studentDetails)
     print('----------------------------')
