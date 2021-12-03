@@ -31,6 +31,7 @@ alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
 
 firstFileName = ""
 
+#basic webscraping technique using front-end interaction
 def nathanMain():
     try:
         print("Begining scraping sequence")
@@ -313,23 +314,66 @@ def removeDuplicateLines(filename):
     except:
         pass
 
-def michaelMain():
+#webscraping method directly using the backend API provided user is authenticated
+def mmMain():
     POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
 
-    first = 'aa'
-    last = 'aa'
+    try:
+        print("Begining scraping sequence")
+        exe = os.path.exists(PATH)
 
-    body = '{"searchType":"Advanced","netid":"","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"2","type":"s"}'
+        if exe:
+            print("Executable found")
 
-    #authentication
-    #duo login
+            driver = webdriver.Chrome()
+            driver.get("https://my.msstate.edu/")
 
-    #get cookies
+            elem = driver.find_element(By.ID,USERNAME_ID)
+            elem.clear()
+            elem.send_keys(INJECTION_NAME)
 
-    #set cookies
-    
-    #send posts
+            elem = driver.find_element(By.ID, PASSWORD_ID)
+            elem.clear()
+            elem.send_keys(INJECTION_PASSWORD)
+
+            driver.find_element(By.NAME,'submit').click()
+
+            #DUO handling
+            masterElemnString = "login"
+            myElem = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, masterElemnString)))
+            print(f"DUO {masterElemnString} loaded")
+
+            #switch to duo iFrame
+            iFrameTitle = "duo_iframe"
+            driver.switch_to.frame(iFrameTitle)
+
+            #wait for push button to load and click it
+            pushButtontext = "Send Me a Push"
+            WebDriverWait(driver, PUSH_TIMEOUT).until(
+                EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
+            print("Push sent")
+
+            #wait for directory to load to confirm we're in the system
+            directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, directoryID)))
+            print("Directory element loaded")
+           
+            cookieReq = requests.post('https://my.msstate.edu/')
+
+            first = 'nathan'
+            last = 'cheshire'
+
+            payload = ' {"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"1","type":"e"}'
+            req = requests.post(POST, data = payload, cookies = cookieReq.cookies)
+            print(req.text)
+                    
+        else:
+            print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
+    except Exception as e:
+        print("Exception:", e)
 
 if __name__ == "__main__":
     #nathanMain()
-    michaelMain()
+    mmMain()
