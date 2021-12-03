@@ -151,6 +151,13 @@ def main():
                         continue
 
                 #remove all duplicates from the file
+                lines_seen = set()
+                outfile = open(firstFileName, "w")
+                for line in open(firstFileName, "r"):
+                    if line not in lines_seen:
+                        outfile.write(line)
+                        lines_seen.add(line)
+                outfile.close()
 
                 print(firstFileName,' finished with all last permutations. Continuing to next first permutation')
 
