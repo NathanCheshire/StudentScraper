@@ -1,0 +1,12 @@
+Elizabeth Baach,Graduate,Forestry,eb1605@msstate.edu,NULL,NULL,NULL,NULL
+Abdelmounem Boukraa,Graduate,Forestry,ab4870@msstate.edu,NULL,NULL,NULL,NULL
+Elizabeth Baach,Graduate,Forestry,eb1605@msstate.edu,NULL,NULL,NULL,NULL
+Abigail Blackwell,Graduate,Forestry,asb707@msstate.edu,6016926818,6016926818,1175 Smith Yeager Rd Meridian MS 39301-7011,1175 Smith Yeager Rd Meridian MS 39301-7011
+Abigale Brignac,Graduate,Forestry,amb1985@msstate.edu,5012768851,NULL,15 Bonaparte St Brandon MS 39047-8890 Residence Hall 0427 Cresswell Residence Hall,NULL
+Abigail Jacob,Graduate,Forestry,arj381@msstate.edu,2174601642,2174601642,Po Box 102 Tuscola IL 61953-7553,Po Box 102 Tuscola IL 61953-7553
+Isabelle Jacobsen,Graduate,Forestry,icj16@msstate.edu,6362833230,6362833230,3004 Deutsch Crest Dr. Washington MO 63090,3004 Deutsch Crest Dr. Washington MO 63090
+Isabella Lacourrege,Graduate,Forestry,iel13@msstate.edu,6015035573,6015035573,944 North Azalea Drive Madison MS 391109,944 North Azalea Drive Madison MS 391109
+Abby Peacock,Graduate,Forestry,ap2626@msstate.edu,9012070050,NULL,2137 Legends Drive Nesbit MS 38651,NULL
+Elizabeth Wallace,Graduate,Forestry,ekw174@msstate.edu,6019408284,6019408284,604 Little Pine Cove Flowood MS 39232,604 Little Pine Cove Flowood MS 39232
+Gabriella Adair,Sophomore,Biochemistry,gca56@msstate.edu,NULL,NULL,NULL,NULL
+Anna Adams,Sophomore,Biochemistry,aa2752@msstate.edu,2283341294,2283341294,527 Front Beach Drive #25 Ocean Springs MS 39564,527 Front Beach Drive #25 Ocean Springs MS 39564

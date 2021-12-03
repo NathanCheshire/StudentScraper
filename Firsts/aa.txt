@@ -1,6 +1,0 @@
-Basant Gomaa,Graduate,Veterinary Med Sci,bmg381@msstate.edu,6626942399,NULL,105 Lavender Ln Starkville MS 39759,NULL
-Aaron Abbott,Freshman,Agribusiness,aa2869@msstate.edu,6015060499,NULL,1006 Destiny Cove Brandon MS 39042,NULL
-Alaa Ashraf Abulhamail,Freshman,Agribusiness,aa2798@msstate.edu,6626173370,NULL,500 Mallory Lane Apartment 23 C Starkville MS 39759,Ubhor Al-Shamalia Jeddah
-Isaac Huckaby,Freshman,Agribusiness,ikh5@msstate.edu,9018273217,9018273217,175 Fawn Drive Hernando MS 38632,205 Lynn Ln Apt 11g Starkville MS 39759-4169
-Aaron Broadus,Senior,Biological Sciences,aeb762@msstate.edu,2288067897,2288067897,9347 Evans Road Gulfport MS 39503,9347 Evans Road Gulfport MS 39503
-Mccaa Headley,Senior,Biological Sciences,meh914@msstate.edu,6015404223,6015404223,13 Eastbrooke Cir Madison MS 39110,13 Eastbrooke Cir Madison MS 39110

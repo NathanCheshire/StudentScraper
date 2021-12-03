@@ -1,4 +1,5 @@
 import os
+import requests
 import re
 import math
 import time
@@ -30,7 +31,7 @@ alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
 
 firstFileName = ""
 
-def main():
+def nathanMain():
     try:
         print("Begining scraping sequence")
         exe = os.path.exists(PATH)
@@ -85,7 +86,7 @@ def main():
             for first in firsts:
                 #Create the file we're going to write to for this first pair
                 global firstFileName
-                firstFileName = "Firsts/" + first + ".txt"
+                firstFileName = "Firsts/First_Name_Contains_" + first + ".txt"
                 file = open(firstFileName,'w+')
                 file.close()
 
@@ -150,14 +151,8 @@ def main():
                     except:
                         continue
 
-                #remove all duplicates from the file
-                lines_seen = set()
-                outfile = open(firstFileName, "w")
-                for line in open(firstFileName, "r"):
-                    if line not in lines_seen:
-                        outfile.write(line)
-                        lines_seen.add(line)
-                outfile.close()
+                #TODO function to take raw file and output
+                # one with duplicates removed
 
                 print(firstFileName,' finished with all last permutations. Continuing to next first permutation')
 
@@ -305,8 +300,36 @@ def generatePairsList():
             ret.append(alphas[i] + alphas[j])
 
     return ret
-                    
+
+def removeDuplicateLines(filename):
+    try:
+        if os.path.exists(filename):
+            newFilename = "FirstsParsed/" + os.path.basename(filename).split(".")[0] + '_Non_Duplicates.txt'
+            f = open(newFilename, "w+")
+            #read from filename into newFilename
+            f.close()
+        else:
+            print("Passed file DNE")
+    except:
+        pass
+
+def michaelMain():
+    POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
+
+    first = 'aa'
+    last = 'aa'
+
+    body = '{"searchType":"Advanced","netid":"","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"2","type":"s"}'
+
+    #authentication
+    #duo login
+
+    #get cookies
+
+    #set cookies
+    
+    #send posts
 
 if __name__ == "__main__":
-    main()
-                          
+    #nathanMain()
+    michaelMain()
