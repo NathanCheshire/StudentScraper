@@ -1,7 +1,7 @@
 # StudentScraper 
 ## By Nathan Cheshire
 
-Student Scraper is a web scraping tool that uses Python and Selenium to scrape student details from my State.
+Student Scraper is a web scraping tool that uses Python and Selenium to scrape student details from MSU's myState.
 
 logindata.txt should exist in the same directory as `StudentScraper.py` and contain your netid and password in the following format: netid,password.
 

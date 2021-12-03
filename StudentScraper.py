@@ -22,11 +22,13 @@ BUTTON_ID = "btn btn-block btn-submit"
 
 PUSH_TIMEOUT = 30
 PAGE_SLEEP_TIMEOUT = 1
-QUERRY_SLEEP_TIMEOUT = 2.5
+QUERRY_SLEEP_TIMEOUT = 1
 
 alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
                 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
                 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+firstFileName = ""
 
 def main():
     try:
@@ -78,7 +80,15 @@ def main():
             firsts = generatePairsList()
             lasts = generatePairsList()
 
+            #todo make a file for each of first combinations so that the files aren't massive
+
             for first in firsts:
+                #Create the file we're going to write to for this first pair
+                global firstFileName
+                firstFileName = "Firsts/" + first + ".txt"
+                file = open(firstFileName,'w+')
+                file.close()
+
                 for last in lasts:
                     try:
                         #inect last name search
@@ -124,7 +134,8 @@ def main():
                         while page < numPages + 1:
                             #get information for each person on current page
                             for person in driver.find_elements(By.CLASS_NAME, "person"):
-                                printPersonDetails(driver, person, person.get_attribute('innerHTML'))
+                                printPersonDetails(driver, person, 
+                                    person.get_attribute('innerHTML'))
 
                             #if the pagenumber element exists, execute js to go to the next page
                             if elementExists(driver, 'pagenums'):
@@ -137,7 +148,9 @@ def main():
 
                         time.sleep(QUERRY_SLEEP_TIMEOUT)
 
-                        print('Continuing with next input permutation')
+                        #TODO now remove all duplicates from the file
+
+                        print(firstFileName,' finished with all last permutations. Continuing to next first permutation')
                     except:
                         continue
 
@@ -145,18 +158,34 @@ def main():
         else:
             print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
     except Exception as e:
-        print("Exception:",e)
+        print("Exception:", e)
 
 def printPersonDetails(driver, person, personName):
+    classification = "NULL"
+    major = "NULL"
+
+    try:
+        parent = person.find_element(By.XPATH, "..").find_element(By.XPATH, "..")
+        pTags = parent.find_elements(By.CSS_SELECTOR, "p")
+        classification = pTags[1].get_attribute('innerHTML')
+        major = pTags[2].get_attribute('innerHTML')
+    except:
+        pass
+
+    if len(classification) == 0:
+        classification = ""
+    if len(major) == 0:
+        major = ""
+
     #Enter person details section
     person.send_keys(Keys.ENTER)
 
-    #wait for details section ot be loaded
+    #wait for details section to be loaded
     detailsID = 'details-section'
     detailsElement = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, detailsID)))
 
-    parseHTML(detailsElement.get_attribute('innerHTML'), personName)
+    parseHTML(detailsElement.get_attribute('innerHTML'), personName, classification, major)
 
     #go back to query results
     WebDriverWait(driver, 10).until(
@@ -169,8 +198,7 @@ def elementExists(driver, id):
         return False
     return True
 
-#todo parse out information and store into excell sheet
-def parseHTML(studentDetails, name):
+def parseHTML(studentDetails, name, classification, major):
     #user attributes
     studentName = name
     studentEmail = "NULL"
@@ -247,8 +275,17 @@ def parseHTML(studentDetails, name):
     studentHomeAddress = studentHomeAddress.replace(",", "")
     studentCampusAddress = studentCampusAddress.replace(",", "")
 
-    #write to file
-    print(studentName,",",studentEmail,",",studentHomePhone,",",studentCampusPhone,",",studentHomeAddress,",",studentCampusAddress,sep = "")
+    file_object = open(firstFileName, 'a')
+    file_object.write(studentName + ",")
+    file_object.write(classification + ",")
+    file_object.write(major + ",")
+    file_object.write(studentEmail + ",")
+    file_object.write(studentHomePhone + ",")
+    file_object.write(studentCampusPhone + ",")
+    file_object.write(studentHomeAddress + ",")
+    file_object.write(studentCampusAddress)
+    file_object.write("\n")
+    file_object.close()
     
 def parseNonAscii(text):
     return re.sub(r'[^\x00-\x7F]+',' ', text)
