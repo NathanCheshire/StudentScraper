@@ -147,12 +147,12 @@ def main():
                             time.sleep(PAGE_SLEEP_TIMEOUT) 
 
                         time.sleep(QUERRY_SLEEP_TIMEOUT)
-
-                        #TODO now remove all duplicates from the file
-
-                        print(firstFileName,' finished with all last permutations. Continuing to next first permutation')
                     except:
                         continue
+
+                #remove all duplicates from the file
+
+                print(firstFileName,' finished with all last permutations. Continuing to next first permutation')
 
             print('All permutations from first and last have been executed; exiting scraper')
         else:
