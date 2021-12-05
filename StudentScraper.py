@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import re
 import math
@@ -393,6 +394,7 @@ def mmMain():
             payload = ' {"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"1","type":"e"}'
 
             req = session.post(POST, data = payload)
+            #might have to remove cookies here? try that
             print(req.text)
                     
         else:
@@ -401,5 +403,5 @@ def mmMain():
         print("Exception:", e)
 
 if __name__ == "__main__":
-    nathanMain()
-    #mmMain()
+    #nathanMain()
+    mmMain()
