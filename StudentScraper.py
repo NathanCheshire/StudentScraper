@@ -1,5 +1,4 @@
 import os
-import json
 from bs4.element import NavigableString
 import requests
 import re
@@ -15,7 +14,6 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from selenium import webdriver   # for webdriver
 from selenium.webdriver.support.ui import WebDriverWait  # for implicit and explict waits
-from selenium.webdriver.chrome.options import Options  # for suppressing the browser
 
 PATH = "chromedriver.exe"
 
@@ -320,14 +318,15 @@ def generatePairsList():
 
     return ret
 
+#removes duplicate lines from the given file and outputs a new file
 def removeDuplicateLines(filename):
     try:
         if os.path.exists(filename):
             linesSeen = []
-            newFilename = "FirstsParsed/" + os.path.basename(filename).split(".")[0] + '_Non_Duplicates.txt'
+            newFilename = os.path.dirname(os.path.realpath(filename)) + "/" + os.path.basename(filename).split(".")[0] + '_Non_Duplicates.txt'
             newFileWriter = open(newFilename, "w+")
 
-            with open('Firsts/First_Name_Contains_ab.txt') as f:
+            with open(filename) as f:
                 lines = f.readlines()
                 for line in lines:
                     if line not in linesSeen:
@@ -342,7 +341,7 @@ def removeDuplicateLines(filename):
         pass
 
 #webscraping method directly using the backend API provided user is authenticated
-def mmMain():
+def apiMain():
     try:
         print("Begining scraping sequence")
         exe = os.path.exists(PATH)
@@ -396,25 +395,32 @@ def mmMain():
             for cookie in yummyCookies:
                 session.cookies.set(cookie['name'], cookie['value'])
 
-            #for first in generatePairsList:
-             #   for last in generatePairsList:
-            first = "na"
-            last = "ch"
+            masterFile = open('StudentDetails.txt','w+')
 
-            #get the number of records there are with this search to construct our loops accordingly
-            totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
-            totalResults = int(totalResultsRet.replace("<directory.person><count>","").replace("</count></directory.person>",""))
-            pages = math.ceil(totalResults / 10.0)
+            for first in generatePairsList():
+                for last in generatePairsList():
+                    #get the number of records there are with this search to construct our loops accordingly
+                    totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
+                    totalResults = int(totalResultsRet.replace("<directory.person><count>","").replace("</count></directory.person>",""))
+                    pages = math.ceil(totalResults / 10.0)
 
-            for page in range(pages + 1):
-                print("Page",page,"of",pages,"for first:",first,"and last:",last)
-                postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
-                print(post(session, postData))
+                    if totalResults == 0:
+                        continue
+
+                    for page in range(pages + 1):
+                        print("Page",page,"of",pages,"for first:",first,"and last:",last)
+                        postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
+                        string = post(session, postData)
+                        masterFile.write(string)
+                        masterFile.write("\n")
+
+            masterFile.close()
+            print("Finished all permutations of first and last, exiting program")
 
         else:
             print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
     except Exception as e:
-        print("Exception:", e)
+        print(e)
 
 POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
 
@@ -424,4 +430,4 @@ def post(session, payload):
 
 if __name__ == "__main__":
     #nathanMain()
-    mmMain()
+    apiMain()
