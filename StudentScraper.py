@@ -484,10 +484,20 @@ def parsePost(text):
             elif "office" in str(number):
                 officePhone = re.compile(r'<.*?>').sub('', str(number))
 
+
+        stat = personSoup.find_all("person")[0]
+
+        netid = stat['netid']
+        pidm = stat['pidm']
+        selected = stat['selected']
+        isStudent = stat['student']
+        isAffiliate = stat['affiliate']
+        isRetired = stat['retired']
+
         print(first, last, picturePublic, picturePrivate, email, 
-                major, class_, homePhone, officePhone, sep = ',')
-        
-        #netid, pidm, selected, student, affiliate, retired, 
+                major, class_, homePhone, officePhone, 
+                netid,pidm,selected,isStudent,isAffiliate,isRetired,sep = ',')
+
         #adr type = "office" has street1, city, state, zip, and country
         #adr type = "permanent" has street1, city, state, zip, and country
 
