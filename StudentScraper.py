@@ -1,5 +1,4 @@
 import os
-from bs4.element import NavigableString
 import requests
 import re
 import math
@@ -12,22 +11,27 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
-from selenium import webdriver   # for webdriver
-from selenium.webdriver.support.ui import WebDriverWait  # for implicit and explict waits
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait 
 
+#relative path to exe
 PATH = "chromedriver.exe"
 
+#your account details, I'm storing them inside of a file that is ignored by git for security reasons :P
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
 INJECTION_PASSWORD = open("logindata.txt").read().split(',')[1]
 
+#IDs to get past login page
 USERNAME_ID = "username"
 PASSWORD_ID = "password"
 BUTTON_ID = "btn btn-block btn-submit"
 
+#timeouts
 PUSH_TIMEOUT = 30
 PAGE_SLEEP_TIMEOUT = 1
 QUERRY_SLEEP_TIMEOUT = 1
 
+#contains permutation slices
 alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
                 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
                 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
@@ -179,6 +183,7 @@ def count_files(in_directory):
         in map(joiner, os.listdir(in_directory))
     )
 
+#gets and logs the given person's details
 def printPersonDetails(driver, person, personName):
     classification = "NULL"
     major = "NULL"
@@ -210,6 +215,7 @@ def printPersonDetails(driver, person, personName):
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located ((By.ID, 'back'))).send_keys(Keys.ENTER)
 
+#checks if an html element exists and is loaded by the current driver
 def elementExists(driver, id):
     try:
         driver.find_element(By.ID, id)
@@ -217,6 +223,7 @@ def elementExists(driver, id):
         return False
     return True
 
+#parses the html returned by the webcrawler
 def parseHTML(studentDetails, name, classification, major):
     #user attributes
     studentName = name
@@ -305,10 +312,12 @@ def parseHTML(studentDetails, name, classification, major):
     file_object.write(studentCampusAddress)
     file_object.write("\n")
     file_object.close()
-    
+
+#removes nonascii chars from a string
 def parseNonAscii(text):
     return re.sub(r'[^\x00-\x7F]+',' ', text)
 
+#generates pairs from aa to zz, starts from the given value if it isn't aa
 def generatePairsList(startFrom = 'aa'):
     ret = []
 
@@ -318,7 +327,6 @@ def generatePairsList(startFrom = 'aa'):
     for i in range(startI,26):
         for j in range(startJ,26):
             ret.append(alphas[i] + alphas[j])
-            print(alphas[i] + alphas[j])
 
     return ret
 
@@ -399,10 +407,12 @@ def apiMain():
             for cookie in yummyCookies:
                 session.cookies.set(cookie['name'], cookie['value'])
 
-            masterFile = open('StudentDetails.txt','w+')
+            #append so we never override details
+            masterFile = open('StudentDetails.txt','a')
 
-            firstStart = 'al'
-            lastStart = 'rs'
+            #update me if you stop the script
+            firstStart = 'bs'
+            lastStart = 'us'
 
             for first in generatePairsList(startFrom = firstStart):
                 for last in generatePairsList(startFrom = lastStart):
@@ -438,4 +448,3 @@ def post(session, payload):
 if __name__ == "__main__":
     #nathanMain()
     apiMain()
-    
