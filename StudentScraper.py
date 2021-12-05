@@ -406,15 +406,18 @@ def apiMain():
             session = requests.Session()
             for cookie in yummyCookies:
                 session.cookies.set(cookie['name'], cookie['value'])
-
-            #append so we never override details
-            masterFile = open('StudentDetails.txt','w+')
            
-            for last in alphas:
+            vowels = ['a','e','i','o','u','y']
+            #loop through all last name contains a vowel
+            for last in vowels:
+                #append so we never override details
+                masterFile = open('StudentDetails_Last_Contains_' + last + '.txt','w+')
+
                 #get the number of records there are with this search to construct our loops accordingly
                 totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
                 totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
                 pages = math.ceil(totalResults / 10.0)
+                print(pages,'pages for last:',last)
 
                 if totalResults == 0:
                     continue
@@ -443,6 +446,25 @@ POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_W
 def post(session, payload):
     return session.post(POST, data = dict(formData = payload)).text
 
+def parsePost(text):
+    #create soup of text
+    soup = BeautifulSoup(text, 'html.parser')
+
+    #get all person tags to sub parse for information
+    tag = soup.find_all("person")
+
+    for person in tag:
+        print(person)
+        #netid, pidm, selected, student, affiliate, retired, lastname, firstname, picturepublic, 
+        #pictureprivate, adr type = "office" has street1, city, state, zip, and country
+        #adr type = "permanent" has street1, city, state, zip, and country
+        #tel type = "permanent" has phone tag
+        #major and class tags
+        #email tag
+        #tel type = "office" has phone tag
+
 if __name__ == "__main__":
     #nathanMain()
-    apiMain()
+    #apiMain()
+    text = '<directory.person><count>28</count><person netid="mcr478" pidm="22557193" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Russell</lastname><firstname>Mary</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>405 East College Street</street1><city>Columbiana</city><state>AL</state><zip>35051</zip><country>United States of America</country></adr><adr type="permanent"><street1>405 East College Street</street1><city>Columbiana</city><state>AL</state><zip>35051</zip><country>United States of America</country></adr><tel type="permanent"><phone>2059376092</phone></tel><roles><student><major>Biological Sciences</major><class>Sophomore</class></student></roles><email>mcr478@msstate.edu</email><tel type="office"><phone>2059376092</phone></tel></person><person netid="pmr158" pidm="22476862" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Russell</lastname><firstname>Parker</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>220 Pimlico Drive</street1><city>Brandon</city><state>MS</state><zip>39042</zip></adr><adr type="permanent"><street1>220 Pimlico Drive</street1><city>Brandon</city><state>MS</state><zip>39042</zip></adr><tel type="permanent"><phone>6013978023</phone></tel><roles><student><major>Business Administration</major><class>Sophomore</class></student></roles><email>pmr158@msstate.edu</email><tel type="office"><phone>6013978023</phone></tel></person><person netid="mcs866" pidm="22594290" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Schrupp</lastname><firstname>Maria</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="permanent"><street1>6215 Cascade Pass</street1><city>Chanhassen</city><state>MN</state><zip>55317</zip><country>United States of America</country></adr><tel type="permanent"><phone>9524700104</phone></tel><roles><student><major>Applied Anthropology</major><class>Graduate</class></student></roles><email>mcs866@msstate.edu</email></person><person netid="ses933" pidm="22465494" selected="no" student="yes" affiliate="no" retired="no"><name><preferred>Emmy</preferred><lastname>Scruggs</lastname><firstname>Sarah</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="permanent"><street1>2520 Audubon Dr</street1><city>Laurel</city><state>MS</state><zip>39443</zip><country>United States of America</country></adr><tel type="permanent"><phone>6013190112</phone></tel><roles><student><major>Elementary Education</major><class>Junior</class></student></roles><email>ses933@msstate.edu</email></person><person netid="cs3531" pidm="22405537" selected="no" student="yes" affiliate="no" retired="no"><name><preferred>Carson</preferred><lastname>Spruiell</lastname><firstname>Carson</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>4699 Trussville Clay Road</street1><city>Trussville</city><state>AL</state><zip>35173</zip><country>United States of America</country></adr><adr type="permanent"><street1>4699 Trussville Clay Road</street1><city>Trussville</city><state>AL</state><zip>35173</zip><country>United States of America</country></adr><tel type="permanent"><phone>2055685957</phone></tel><roles><student><major>Kinesiology</major><class>Senior</class></student></roles><email>cs3531@msstate.edu</email><tel type="office"><phone>2055685957</phone></tel></person><person netid="ms4365" pidm="22575549" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Spruill</lastname><firstname>Mari Wilson</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>805 E Claiborne Ave</street1><city>Greenwood</city><state>MS</state><zip>38930-3209</zip><country>United States of America</country></adr><adr type="permanent"><street1>805 E Claiborne Ave</street1><city>Greenwood</city><state>MS</state><zip>38930-3209</zip><country>United States of America</country></adr><tel type="permanent"><phone>6622999472</phone></tel><roles><student><major>Psychology</major><class>Freshman</class></student></roles><email>ms4365@msstate.edu</email><tel type="office"><phone>6622999472</phone></tel></person><person netid="skt50" pidm="21099474" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Tuggali Katarukonda</lastname><firstname>Santosh Kumar</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>105 Hartness St.</street1><street2>Apartment A</street2><city>Starkville</city><state>MS</state><zip>39759</zip><country>United States of America</country></adr><roles><student><major>Molecular Biology</major></student></roles><email>skt50@msstate.edu</email></person><person netid="mmw596" pidm="22426244" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Waldrup</lastname><firstname>Mary</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>765 Old Mayhew Rd</street1><street2>Unit 54</street2><city>Starkville</city><state>MS</state><zip>39759</zip><country>United States of America</country></adr><adr type="permanent"><street1>8 Peach Tree Ln</street1><city>Madison</city><state>MS</state><zip>39110</zip><country>United States of America</country></adr><tel type="permanent"><phone>6625906377</phone></tel><roles><student><major>Interdisciplinary Studies</major><class>Senior</class></student></roles><email>mmw596@msstate.edu</email><tel type="office"><phone>6625906377</phone></tel></person></directory.person>'
+    parsePost(text)
