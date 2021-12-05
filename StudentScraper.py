@@ -323,7 +323,7 @@ def removeDuplicateLines(filename):
             newFilename = "FirstsParsed/" + os.path.basename(filename).split(".")[0] + '_Non_Duplicates.txt'
             newFileWriter = open(newFilename, "w+")
 
-            with open('Firsts/First_Name_Contains_aa.txt') as f:
+            with open('Firsts/First_Name_Contains_ab.txt') as f:
                 lines = f.readlines()
                 for line in lines:
                     if line not in linesSeen:
@@ -391,10 +391,9 @@ def mmMain():
 
             first = 'nathan'
             last = 'cheshire'
-            payload = ' {"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"1","type":"e"}'
+            payload = '{formData: {"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"1","type":"e"}}'
 
             req = session.post(POST, data = payload)
-            #might have to remove cookies here? try that
             print(req.text)
                     
         else:
@@ -404,4 +403,5 @@ def mmMain():
 
 if __name__ == "__main__":
     #nathanMain()
-    mmMain()
+    removeDuplicateLines("Firsts/First_Name_Contains_ab.txt")
+    #mmMain()
