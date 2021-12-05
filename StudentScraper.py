@@ -1,5 +1,6 @@
 import os
 import json
+from bs4.element import NavigableString
 import requests
 import re
 import math
@@ -12,6 +13,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+from selenium import webdriver   # for webdriver
+from selenium.webdriver.support.ui import WebDriverWait  # for implicit and explict waits
+from selenium.webdriver.chrome.options import Options  # for suppressing the browser
 
 PATH = "chromedriver.exe"
 
@@ -339,8 +343,6 @@ def removeDuplicateLines(filename):
 
 #webscraping method directly using the backend API provided user is authenticated
 def mmMain():
-    POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
-
     try:
         print("Begining scraping sequence")
         exe = os.path.exists(PATH)
@@ -348,7 +350,11 @@ def mmMain():
         if exe:
             print("Executable found")
 
-            driver = webdriver.Chrome()
+            option = webdriver.ChromeOptions()
+            option.add_argument('headless')
+            driver = webdriver.Chrome(options = option)
+
+           
             driver.get("https://my.msstate.edu/")
 
             elem = driver.find_element(By.ID,USERNAME_ID)
@@ -383,25 +389,39 @@ def mmMain():
                 EC.presence_of_element_located((By.ID, directoryID)))
             print("Directory element loaded")
            
+            #copy over cookies from duo authentication
             yummyCookies = driver.get_cookies()
 
             session = requests.Session()
             for cookie in yummyCookies:
                 session.cookies.set(cookie['name'], cookie['value'])
 
-            first = 'nathan'
-            last = 'cheshire'
-            payload = '{formData: {"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"1","type":"e"}}'
+            #for first in generatePairsList:
+             #   for last in generatePairsList:
+            first = "na"
+            last = "ch"
 
-            req = session.post(POST, data = payload)
-            print(req.text)
-                    
+            #get the number of records there are with this search to construct our loops accordingly
+            totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
+            totalResults = int(totalResultsRet.replace("<directory.person><count>","").replace("</count></directory.person>",""))
+            pages = math.ceil(totalResults / 10.0)
+
+            for page in range(pages + 1):
+                print("Page",page,"of",pages,"for first:",first,"and last:",last)
+                postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
+                print(post(session, postData))
+
         else:
             print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
     except Exception as e:
         print("Exception:", e)
 
+POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
+
+#returns the text from a post to the state server
+def post(session, payload):
+    return session.post(POST, data = dict(formData = payload)).text
+
 if __name__ == "__main__":
     #nathanMain()
-    removeDuplicateLines("Firsts/First_Name_Contains_ab.txt")
-    #mmMain()
+    mmMain()
