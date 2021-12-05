@@ -82,12 +82,20 @@ def nathanMain():
             firsts = generatePairsList()
             lasts = generatePairsList()
 
-            #todo make a file for each of first combinations so that the files aren't massive
+            #skip permutations we have finished
+            skips = 0
+            skipped = count_files('FirstsParsed')
+            print('skipped:',skipped)
 
-            for first in firsts:
+            for firstIndex in range(len(firsts)):
+                if skips != skipped:
+                    print("Skipping: first =",firsts[firstIndex])
+                    skips += 1
+                    continue
+
                 #Create the file we're going to write to for this first pair
                 global firstFileName
-                firstFileName = "Firsts/First_Name_Contains_" + first + ".txt"
+                firstFileName = "Firsts/First_Name_Contains_" + firsts[firstIndex] + ".txt"
                 file = open(firstFileName,'w+')
                 file.close()
 
@@ -105,7 +113,7 @@ def nathanMain():
                         elem = WebDriverWait(driver, 10).until(
                             EC.presence_of_element_located((By.ID, secondSearchFieldID)))
                         elem.clear()
-                        elem.send_keys(first)
+                        elem.send_keys(firsts[firstIndex])
 
                         #Submit search based on provided first and last name
                         searchText = "submit"
@@ -121,7 +129,7 @@ def nathanMain():
                             EC.element_to_be_clickable((By.ID, 'count')))
                         elementCount = int(re.search(r'\d+', countElement.get_attribute('innerHTML')).group())
                         print("---------------------------------")
-                        print("Querry: first =",first,"last =",last)
+                        print("Querry: first =",firsts[firstIndex],"last =",last)
                         print('Records returned:', elementCount)
                         numPages = int(math.ceil(elementCount / 10.0))
                         print('Number of pages:',numPages)
@@ -152,9 +160,6 @@ def nathanMain():
                     except:
                         continue
 
-                #TODO function to take raw file and output
-                # one with duplicates removed
-
                 print(firstFileName,' finished with all last permutations. Continuing to next first permutation')
 
             print('All permutations from first and last have been executed; exiting scraper')
@@ -162,6 +167,14 @@ def nathanMain():
             print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
     except Exception as e:
         print("Exception:", e)
+
+def count_files(in_directory):
+    joiner= (in_directory + os.path.sep).__add__
+    return sum(
+        os.path.isfile(filename)
+        for filename
+        in map(joiner, os.listdir(in_directory))
+    )
 
 def printPersonDetails(driver, person, personName):
     classification = "NULL"
@@ -388,6 +401,5 @@ def mmMain():
         print("Exception:", e)
 
 if __name__ == "__main__":
-    #nathanMain()
+    nathanMain()
     #mmMain()
-    removeDuplicateLines('Firsts/First_Name_Contains_aa.txt')
