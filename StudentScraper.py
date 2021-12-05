@@ -305,10 +305,19 @@ def generatePairsList():
 def removeDuplicateLines(filename):
     try:
         if os.path.exists(filename):
+            linesSeen = []
             newFilename = "FirstsParsed/" + os.path.basename(filename).split(".")[0] + '_Non_Duplicates.txt'
-            f = open(newFilename, "w+")
-            #read from filename into newFilename
-            f.close()
+            newFileWriter = open(newFilename, "w+")
+
+            with open('Firsts/First_Name_Contains_aa.txt') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if line not in linesSeen:
+                        linesSeen.append(line)
+                        newFileWriter.write(line)
+
+            
+            newFileWriter.close()
         else:
             print("Passed file DNE")
     except:
@@ -379,5 +388,6 @@ def mmMain():
         print("Exception:", e)
 
 if __name__ == "__main__":
-    nathanMain()
+    #nathanMain()
     #mmMain()
+    removeDuplicateLines('Firsts/First_Name_Contains_aa.txt')
