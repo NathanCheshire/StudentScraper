@@ -444,23 +444,48 @@ POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_W
 
 #returns the text from a post to the state server
 def post(session, payload):
+    #TODO nothing will be returned, this will be added to pg db from parsePost
     return session.post(POST, data = dict(formData = payload)).text
+
+#tags for parsing people
+PERSON_TAG = 'person'
+LASTNAME_TAG = 'lastname'
+FIRSTNAME_TAG = 'firstname'
+PICTUREPUBLIC_TAG = 'picturepublic'
+PICTUREPRIVATE_TAG = 'pictureprivate'
+EMAIL_TAG = 'email'
+
+ROLES_TAG = 'roles'
+STUDENT_ROLE_TAG = 'student'
+MAJOR_TAG = 'major'
+CLASS_TAG = 'class'
 
 def parsePost(text):
     #create soup of text
     soup = BeautifulSoup(text, 'html.parser')
-
     #get all person tags to sub parse for information
-    tag = soup.find_all("person")
+    tag = soup.find_all(PERSON_TAG)
 
     for person in tag:
-        print(person)
-        #netid, pidm, selected, student, affiliate, retired, lastname, firstname, picturepublic, 
-        #pictureprivate, adr type = "office" has street1, city, state, zip, and country
+        personSoup = BeautifulSoup(str(person),'html.parser')
+
+        first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG)))
+        last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG)))
+        picturePublic = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPUBLIC_TAG)))
+        picturePrivate = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPRIVATE_TAG)))
+        email = re.compile(r'<.*?>').sub('', str(personSoup.find(EMAIL_TAG)))
+
+        rolesTags = personSoup.find(ROLES_TAG)
+        studentTags = BeautifulSoup(str(rolesTags),'html.parser').find(STUDENT_ROLE_TAG)
+        major = re.compile(r'<.*?>').sub('', str(studentTags.find(MAJOR_TAG)))
+        class_ = re.compile(r'<.*?>').sub('', str(studentTags.find(CLASS_TAG)))
+
+        print(first, last, picturePublic, picturePrivate, email, major, class_, sep = ',')
+        
+        #netid, pidm, selected, student, affiliate, retired, 
+        #adr type = "office" has street1, city, state, zip, and country
         #adr type = "permanent" has street1, city, state, zip, and country
         #tel type = "permanent" has phone tag
-        #major and class tags
-        #email tag
         #tel type = "office" has phone tag
 
 if __name__ == "__main__":
