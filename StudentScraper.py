@@ -360,13 +360,17 @@ def mmMain():
                 EC.presence_of_element_located((By.ID, directoryID)))
             print("Directory element loaded")
            
-            cookieReq = requests.post('https://my.msstate.edu/')
+            yummyCookies = driver.get_cookies()
+
+            session = requests.Session()
+            for cookie in yummyCookies:
+                session.cookies.set(cookie['name'], cookie['value'])
 
             first = 'nathan'
             last = 'cheshire'
-
             payload = ' {"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"1","type":"e"}'
-            req = requests.post(POST, data = payload, cookies = cookieReq.cookies)
+
+            req = session.post(POST, data = payload)
             print(req.text)
                     
         else:
@@ -375,5 +379,5 @@ def mmMain():
         print("Exception:", e)
 
 if __name__ == "__main__":
-    #nathanMain()
-    mmMain()
+    nathanMain()
+    #mmMain()
