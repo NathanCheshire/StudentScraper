@@ -410,9 +410,6 @@ def apiMain():
             vowels = ['a','e','i','o','u','y']
             #loop through all last name contains a vowel
             for last in vowels:
-                #append so we never override details
-                masterFile = open('StudentDetails_Last_Contains_' + last + '.txt','w+')
-
                 #get the number of records there are with this search to construct our loops accordingly
                 totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
                 totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
@@ -425,15 +422,12 @@ def apiMain():
                 for page in range(pages + 1):
                     print("Page",page,"of",pages,"for first:","","and last:",last)
                     postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
-                    string = post(session, postData)
-                    masterFile.write(string)
-                    masterFile.write("\n")
+                    post(session, postData)
 
                     #reasonable timeout
                     time.sleep(0.5)
 
-            masterFile.close()
-            print("Finished all permutations of first and last, exiting program")
+            print("Finished all last contains vowels, exiting scraper")
 
         else:
             print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
@@ -480,13 +474,22 @@ def parsePost(text):
         major = re.compile(r'<.*?>').sub('', str(studentTags.find(MAJOR_TAG)))
         class_ = re.compile(r'<.*?>').sub('', str(studentTags.find(CLASS_TAG)))
 
-        print(first, last, picturePublic, picturePrivate, email, major, class_, sep = ',')
+        numbers = personSoup.find_all('tel')
+        homePhone = "NULL"
+        officePhone = "NULL"
+        
+        for number in numbers:
+            if "permanent" in str(number):
+                homePhone = re.compile(r'<.*?>').sub('', str(number))
+            elif "office" in str(number):
+                officePhone = re.compile(r'<.*?>').sub('', str(number))
+
+        print(first, last, picturePublic, picturePrivate, email, 
+                major, class_, homePhone, officePhone, sep = ',')
         
         #netid, pidm, selected, student, affiliate, retired, 
         #adr type = "office" has street1, city, state, zip, and country
         #adr type = "permanent" has street1, city, state, zip, and country
-        #tel type = "permanent" has phone tag
-        #tel type = "office" has phone tag
 
 if __name__ == "__main__":
     #nathanMain()
