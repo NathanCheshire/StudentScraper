@@ -408,28 +408,26 @@ def apiMain():
                 session.cookies.set(cookie['name'], cookie['value'])
 
             #append so we never override details
-            masterFile = open('StudentDetails.txt','a')
+            masterFile = open('StudentDetails.txt','w+')
+           
+            for last in alphas:
+                #get the number of records there are with this search to construct our loops accordingly
+                totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
+                totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
+                pages = math.ceil(totalResults / 10.0)
 
-            #update me if you stop the script
-            firstStart = 'bs'
-            lastStart = 'us'
+                if totalResults == 0:
+                    continue
 
-            for first in generatePairsList(startFrom = firstStart):
-                for last in generatePairsList(startFrom = lastStart):
-                    #get the number of records there are with this search to construct our loops accordingly
-                    totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
-                    totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
-                    pages = math.ceil(totalResults / 10.0)
+                for page in range(pages + 1):
+                    print("Page",page,"of",pages,"for first:","","and last:",last)
+                    postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
+                    string = post(session, postData)
+                    masterFile.write(string)
+                    masterFile.write("\n")
 
-                    if totalResults == 0:
-                        continue
-
-                    for page in range(pages + 1):
-                        print("Page",page,"of",pages,"for first:",first,"and last:",last)
-                        postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
-                        string = post(session, postData)
-                        masterFile.write(string)
-                        masterFile.write("\n")
+                    #reasonable timeout
+                    time.sleep(0.5)
 
             masterFile.close()
             print("Finished all permutations of first and last, exiting program")
