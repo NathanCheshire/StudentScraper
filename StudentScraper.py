@@ -309,12 +309,16 @@ def parseHTML(studentDetails, name, classification, major):
 def parseNonAscii(text):
     return re.sub(r'[^\x00-\x7F]+',' ', text)
 
-def generatePairsList():
+def generatePairsList(startFrom = 'aa'):
     ret = []
 
-    for i in range(0,26):
-        for j in range(0,26):
+    startI = alphas.index(startFrom[0])
+    startJ = alphas.index(startFrom[1])
+
+    for i in range(startI,26):
+        for j in range(startJ,26):
             ret.append(alphas[i] + alphas[j])
+            print(alphas[i] + alphas[j])
 
     return ret
 
@@ -397,11 +401,14 @@ def apiMain():
 
             masterFile = open('StudentDetails.txt','w+')
 
-            for first in generatePairsList():
-                for last in generatePairsList():
+            firstStart = 'al'
+            lastStart = 'rs'
+
+            for first in generatePairsList(startFrom = firstStart):
+                for last in generatePairsList(startFrom = lastStart):
                     #get the number of records there are with this search to construct our loops accordingly
                     totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + first + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
-                    totalResults = int(totalResultsRet.replace("<directory.person><count>","").replace("</count></directory.person>",""))
+                    totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
                     pages = math.ceil(totalResults / 10.0)
 
                     if totalResults == 0:
@@ -431,3 +438,4 @@ def post(session, payload):
 if __name__ == "__main__":
     #nathanMain()
     apiMain()
+    
