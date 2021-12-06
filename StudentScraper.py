@@ -353,6 +353,8 @@ def removeDuplicateLines(filename):
     except:
         pass
 
+#################################################################################################################################
+
 #webscraping method directly using the backend API provided user is authenticated
 def apiMain():
     print("Begining scraping sequence")
@@ -361,10 +363,9 @@ def apiMain():
     if exe:
         print("Executable found")
 
-        #option = webdriver.ChromeOptions()
-        #option.add_argument('headless')
-        #driver = webdriver.Chrome(options = option)
-        driver = webdriver.Chrome()
+        option = webdriver.ChromeOptions()
+        option.add_argument('headless')
+        driver = webdriver.Chrome(options = option)
         
         driver.get("https://my.msstate.edu/")
 
@@ -403,6 +404,7 @@ def apiMain():
         #copy over cookies from duo authentication
         yummyCookies = driver.get_cookies()
 
+        #the fact that cookies don't timeout is insane like what are you doing state?
         session = requests.Session()
         for cookie in yummyCookies:
             session.cookies.set(cookie['name'], cookie['value'])
@@ -529,36 +531,96 @@ def parsePost(text):
         insertPG(netid, email, first, last, picturePublic, picturePrivate, major,class_, homePhone,officePhone,
                 pidm, selected, isStudent, isAffiliate, isRetired, homeStreet, homeCity, homeState, homeZip, homeCountry,
                 officeStreet, officeCity, officeState, officeZip, officeCountry)   
-#password is 1234
+
 def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
                 homePhone = "NULL",officePhone = "NULL",pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
                 homeStreet = "NULL",homeCity = "NULL",homeState = "NULL",homeZip = "NULL",homeCountry = "NULL",
                 officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL"):
-                
+
     #try catch since duplicates will be skipped
     try:
         con = psycopg2.connect(
-            host = "cypherlenovo",
-            database = "msu_students" ,
+            host = "cypherlenovo", #beep boop machine name
+            database = "msu_students" , #db name
             user = 'postgres',
             password = '1234',
-            port = '5433'
+            port = '5433' #default port is 5432
         )
 
-        #TODO everything here could have quotes and shit that mess up this string building
-        # fix that, also add a try catch for inserting since duplicates will crash the program
-        # for all inputs everywhere there's a ' replace with \' and same for " to \"
+        for local in locals():
+            local = local.replace("'","\'").replace('"','\"')
+
+        #implement start page for a given start vowel
 
         cur = con.cursor()
         command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
-        print(command)
+
+        #run and commit query
         cur.execute(command)
         con.commit()
 
+        #avoid memory leaks
         cur.close()
         con.close()
     except:
         pass
+
+#TODO - use a-z query and sum for this, shouldn't take but like 5 minutes
+def totalRecords():
+    exe = os.path.exists(PATH)
+
+    if exe:
+        option = webdriver.ChromeOptions()
+        option.add_argument('headless')
+        driver = webdriver.Chrome(options = option)
+        
+        driver.get("https://my.msstate.edu/")
+
+        elem = driver.find_element(By.ID,USERNAME_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_NAME)
+
+        elem = driver.find_element(By.ID, PASSWORD_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_PASSWORD)
+
+        driver.find_element(By.NAME,'submit').click()
+
+        #DUO handling
+        masterElemnString = "login"
+        myElem = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, masterElemnString)))
+        print(f"DUO {masterElemnString} loaded")
+
+        #switch to duo iFrame
+        iFrameTitle = "duo_iframe"
+        driver.switch_to.frame(iFrameTitle)
+
+        #wait for push button to load and click it
+        pushButtontext = "Send Me a Push"
+        WebDriverWait(driver, PUSH_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
+        print("Push sent")
+
+        #wait for directory to load to confirm we're in the system
+        directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
+        WebDriverWait(driver, 40).until(
+            EC.presence_of_element_located((By.ID, directoryID)))
+        print("Directory element loaded")
+        
+        #copy over cookies from duo authentication
+        yummyCookies = driver.get_cookies()
+
+        #the fact that cookies don't timeout is insane like what are you doing state?
+        session = requests.Session()
+        for cookie in yummyCookies:
+            session.cookies.set(cookie['name'], cookie['value'])
+        
+        records = 0
+
+        #how to find out the total number without duplicates?
+
+        print(f'There are a total of {records} public records from the MSU directory')
 
 if __name__ == "__main__":
     apiMain()
