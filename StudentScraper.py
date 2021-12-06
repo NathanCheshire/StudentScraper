@@ -354,91 +354,86 @@ def removeDuplicateLines(filename):
 
 #webscraping method directly using the backend API provided user is authenticated
 def apiMain():
-    try:
-        print("Begining scraping sequence")
-        exe = os.path.exists(PATH)
+    print("Begining scraping sequence")
+    exe = os.path.exists(PATH)
 
-        if exe:
-            print("Executable found")
+    if exe:
+        print("Executable found")
 
-            option = webdriver.ChromeOptions()
-            option.add_argument('headless')
-            driver = webdriver.Chrome(options = option)
+        option = webdriver.ChromeOptions()
+        option.add_argument('headless')
+        driver = webdriver.Chrome(options = option)
 
-           
-            driver.get("https://my.msstate.edu/")
+        
+        driver.get("https://my.msstate.edu/")
 
-            elem = driver.find_element(By.ID,USERNAME_ID)
-            elem.clear()
-            elem.send_keys(INJECTION_NAME)
+        elem = driver.find_element(By.ID,USERNAME_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_NAME)
 
-            elem = driver.find_element(By.ID, PASSWORD_ID)
-            elem.clear()
-            elem.send_keys(INJECTION_PASSWORD)
+        elem = driver.find_element(By.ID, PASSWORD_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_PASSWORD)
 
-            driver.find_element(By.NAME,'submit').click()
+        driver.find_element(By.NAME,'submit').click()
 
-            #DUO handling
-            masterElemnString = "login"
-            myElem = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, masterElemnString)))
-            print(f"DUO {masterElemnString} loaded")
+        #DUO handling
+        masterElemnString = "login"
+        myElem = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, masterElemnString)))
+        print(f"DUO {masterElemnString} loaded")
 
-            #switch to duo iFrame
-            iFrameTitle = "duo_iframe"
-            driver.switch_to.frame(iFrameTitle)
+        #switch to duo iFrame
+        iFrameTitle = "duo_iframe"
+        driver.switch_to.frame(iFrameTitle)
 
-            #wait for push button to load and click it
-            pushButtontext = "Send Me a Push"
-            WebDriverWait(driver, PUSH_TIMEOUT).until(
-                EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
-            print("Push sent")
+        #wait for push button to load and click it
+        pushButtontext = "Send Me a Push"
+        WebDriverWait(driver, PUSH_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
+        print("Push sent")
 
-            #wait for directory to load to confirm we're in the system
-            directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, directoryID)))
-            print("Directory element loaded")
-           
-            #copy over cookies from duo authentication
-            yummyCookies = driver.get_cookies()
+        #wait for directory to load to confirm we're in the system
+        directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, directoryID)))
+        print("Directory element loaded")
+        
+        #copy over cookies from duo authentication
+        yummyCookies = driver.get_cookies()
 
-            session = requests.Session()
-            for cookie in yummyCookies:
-                session.cookies.set(cookie['name'], cookie['value'])
-           
-            vowels = ['a','e','i','o','u','y']
-            #loop through all last name contains a vowel
-            for last in vowels:
-                #get the number of records there are with this search to construct our loops accordingly
-                totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
-                totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
-                pages = math.ceil(totalResults / 10.0)
-                print(pages,'pages for last:',last)
+        session = requests.Session()
+        for cookie in yummyCookies:
+            session.cookies.set(cookie['name'], cookie['value'])
+        
+        vowels = ['a','e','i','o','u','y']
+        #loop through all last name contains a vowel
+        for last in vowels:
+            #get the number of records there are with this search to construct our loops accordingly
+            totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
+            totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
+            pages = math.ceil(totalResults / 10.0)
+            print(pages,'pages for last:',last)
 
-                if totalResults == 0:
-                    continue
+            if totalResults == 0:
+                continue
 
-                for page in range(pages + 1):
-                    print("Page",page,"of",pages,"for first:","","and last:",last)
-                    postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
-                    post(session, postData)
+            for page in range(pages + 1):
+                print("Page",page,"of",pages,"last:",last)
+                postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
+                parsePost(post(session, postData))
 
-                    #reasonable timeout
-                    time.sleep(0.5)
+                #reasonable timeout
+                time.sleep(0.5)
 
-            print("Finished all last contains vowels, exiting scraper")
+        print("Finished all last contains vowels, exiting scraper")
 
-        else:
-            print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
-    except Exception as e:
-        print(e)
+    else:
+        print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
 
 POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
 
-#returns the text from a post to the state server
 def post(session, payload):
-    #TODO nothing will be returned, this will be added to pg db from parsePost
     return session.post(POST, data = dict(formData = payload)).text
 
 #tags for parsing people
@@ -453,6 +448,12 @@ ROLES_TAG = 'roles'
 STUDENT_ROLE_TAG = 'student'
 MAJOR_TAG = 'major'
 CLASS_TAG = 'class'
+
+ADDRESS_STREET_TAG = 'street1'
+ADDRESS_CITY_TAG = 'city'
+ADDRESS_STATE_TAG = 'state'
+ADDRESS_ZIP_TAG = 'zip'
+ADDRESS_COUNTRY_TAG = 'country'
 
 def parsePost(text):
     #create soup of text
@@ -471,8 +472,11 @@ def parsePost(text):
 
         rolesTags = personSoup.find(ROLES_TAG)
         studentTags = BeautifulSoup(str(rolesTags),'html.parser').find(STUDENT_ROLE_TAG)
-        major = re.compile(r'<.*?>').sub('', str(studentTags.find(MAJOR_TAG)))
-        class_ = re.compile(r'<.*?>').sub('', str(studentTags.find(CLASS_TAG)))
+        major = "NULL"
+        class_ = "NULL"
+        if studentTags != None:
+            major = re.compile(r'<.*?>').sub('', str(studentTags.find(MAJOR_TAG)))
+            class_ = re.compile(r'<.*?>').sub('', str(studentTags.find(CLASS_TAG)))
 
         numbers = personSoup.find_all('tel')
         homePhone = "NULL"
@@ -484,7 +488,34 @@ def parsePost(text):
             elif "office" in str(number):
                 officePhone = re.compile(r'<.*?>').sub('', str(number))
 
+        addresses = personSoup.find_all('adr')
 
+        homeStreet = "NULL"
+        homeCity = "NULL"
+        homeState = "NULL"
+        homeZip = "NULL"
+        homeCountry = "NULL"
+
+        officeStreet = "NULL"
+        officeCity = "NULL"
+        officeState = "NULL"
+        officeZip = "NULL"
+        officeCountry = "NULL"
+
+        for address in addresses:
+            if "permanent" in str(address):
+                homeStreet = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_STREET_TAG)))
+                homeCity = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_CITY_TAG)))
+                homeState = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_STATE_TAG)))
+                homeZip = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_ZIP_TAG)))
+                homeCountry = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_COUNTRY_TAG)))
+            elif "office" in str(address):
+                officeStreet = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_STREET_TAG)))
+                officeCity = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_CITY_TAG)))
+                officeState = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_STATE_TAG)))
+                officeZip = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_ZIP_TAG)))
+                officeCountry = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_COUNTRY_TAG)))
+                
         stat = personSoup.find_all("person")[0]
 
         netid = stat['netid']
@@ -494,15 +525,13 @@ def parsePost(text):
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
+        #insert into db with primary key as netid, if that's null then we're kind of fucked anyway
         print(first, last, picturePublic, picturePrivate, email, 
                 major, class_, homePhone, officePhone, 
-                netid,pidm,selected,isStudent,isAffiliate,isRetired,sep = ',')
-
-        #adr type = "office" has street1, city, state, zip, and country
-        #adr type = "permanent" has street1, city, state, zip, and country
+                netid,pidm,selected,isStudent,isAffiliate,isRetired,
+                homeStreet,homeCity,homeState,homeZip,homeCountry,
+                officeStreet,officeCity,officeState,officeZip,officeCountry,
+                sep = ',')
 
 if __name__ == "__main__":
-    #nathanMain()
-    #apiMain()
-    text = '<directory.person><count>28</count><person netid="mcr478" pidm="22557193" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Russell</lastname><firstname>Mary</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>405 East College Street</street1><city>Columbiana</city><state>AL</state><zip>35051</zip><country>United States of America</country></adr><adr type="permanent"><street1>405 East College Street</street1><city>Columbiana</city><state>AL</state><zip>35051</zip><country>United States of America</country></adr><tel type="permanent"><phone>2059376092</phone></tel><roles><student><major>Biological Sciences</major><class>Sophomore</class></student></roles><email>mcr478@msstate.edu</email><tel type="office"><phone>2059376092</phone></tel></person><person netid="pmr158" pidm="22476862" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Russell</lastname><firstname>Parker</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>220 Pimlico Drive</street1><city>Brandon</city><state>MS</state><zip>39042</zip></adr><adr type="permanent"><street1>220 Pimlico Drive</street1><city>Brandon</city><state>MS</state><zip>39042</zip></adr><tel type="permanent"><phone>6013978023</phone></tel><roles><student><major>Business Administration</major><class>Sophomore</class></student></roles><email>pmr158@msstate.edu</email><tel type="office"><phone>6013978023</phone></tel></person><person netid="mcs866" pidm="22594290" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Schrupp</lastname><firstname>Maria</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="permanent"><street1>6215 Cascade Pass</street1><city>Chanhassen</city><state>MN</state><zip>55317</zip><country>United States of America</country></adr><tel type="permanent"><phone>9524700104</phone></tel><roles><student><major>Applied Anthropology</major><class>Graduate</class></student></roles><email>mcs866@msstate.edu</email></person><person netid="ses933" pidm="22465494" selected="no" student="yes" affiliate="no" retired="no"><name><preferred>Emmy</preferred><lastname>Scruggs</lastname><firstname>Sarah</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="permanent"><street1>2520 Audubon Dr</street1><city>Laurel</city><state>MS</state><zip>39443</zip><country>United States of America</country></adr><tel type="permanent"><phone>6013190112</phone></tel><roles><student><major>Elementary Education</major><class>Junior</class></student></roles><email>ses933@msstate.edu</email></person><person netid="cs3531" pidm="22405537" selected="no" student="yes" affiliate="no" retired="no"><name><preferred>Carson</preferred><lastname>Spruiell</lastname><firstname>Carson</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>4699 Trussville Clay Road</street1><city>Trussville</city><state>AL</state><zip>35173</zip><country>United States of America</country></adr><adr type="permanent"><street1>4699 Trussville Clay Road</street1><city>Trussville</city><state>AL</state><zip>35173</zip><country>United States of America</country></adr><tel type="permanent"><phone>2055685957</phone></tel><roles><student><major>Kinesiology</major><class>Senior</class></student></roles><email>cs3531@msstate.edu</email><tel type="office"><phone>2055685957</phone></tel></person><person netid="ms4365" pidm="22575549" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Spruill</lastname><firstname>Mari Wilson</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>805 E Claiborne Ave</street1><city>Greenwood</city><state>MS</state><zip>38930-3209</zip><country>United States of America</country></adr><adr type="permanent"><street1>805 E Claiborne Ave</street1><city>Greenwood</city><state>MS</state><zip>38930-3209</zip><country>United States of America</country></adr><tel type="permanent"><phone>6622999472</phone></tel><roles><student><major>Psychology</major><class>Freshman</class></student></roles><email>ms4365@msstate.edu</email><tel type="office"><phone>6622999472</phone></tel></person><person netid="skt50" pidm="21099474" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Tuggali Katarukonda</lastname><firstname>Santosh Kumar</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>105 Hartness St.</street1><street2>Apartment A</street2><city>Starkville</city><state>MS</state><zip>39759</zip><country>United States of America</country></adr><roles><student><major>Molecular Biology</major></student></roles><email>skt50@msstate.edu</email></person><person netid="mmw596" pidm="22426244" selected="no" student="yes" affiliate="no" retired="no"><name><lastname>Waldrup</lastname><firstname>Mary</firstname></name><picturepublic>false</picturepublic><pictureprivate>false</pictureprivate><adr type="office"><street1>765 Old Mayhew Rd</street1><street2>Unit 54</street2><city>Starkville</city><state>MS</state><zip>39759</zip><country>United States of America</country></adr><adr type="permanent"><street1>8 Peach Tree Ln</street1><city>Madison</city><state>MS</state><zip>39110</zip><country>United States of America</country></adr><tel type="permanent"><phone>6625906377</phone></tel><roles><student><major>Interdisciplinary Studies</major><class>Senior</class></student></roles><email>mmw596@msstate.edu</email><tel type="office"><phone>6625906377</phone></tel></person></directory.person>'
-    parsePost(text)
+    apiMain()
