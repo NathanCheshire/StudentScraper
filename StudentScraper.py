@@ -396,7 +396,7 @@ def apiMain():
 
         #wait for directory to load to confirm we're in the system
         directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
-        WebDriverWait(driver, 10).until(
+        WebDriverWait(driver, 40).until(
             EC.presence_of_element_located((By.ID, directoryID)))
         print("Directory element loaded")
         
@@ -465,8 +465,8 @@ def parsePost(text):
     for person in tag:
         personSoup = BeautifulSoup(str(person),'html.parser')
 
-        first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG)))
-        last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG)))
+        first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG))).replace("'","").replace('"',"")
+        last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG))).replace("'","").replace('"',"")
         picturePublic = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPUBLIC_TAG)))
         picturePrivate = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPRIVATE_TAG)))
         email = re.compile(r'<.*?>').sub('', str(personSoup.find(EMAIL_TAG)))
@@ -526,7 +526,9 @@ def parsePost(text):
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
-        insertPG()   
+        insertPG(netid, email, first, last, picturePublic, picturePrivate, major,class_, homePhone,officePhone,
+                pidm, selected, isStudent, isAffiliate, isRetired, homeStreet, homeCity, homeState, homeZip, homeCountry,
+                officeStreet, officeCity, officeState, officeZip, officeCountry)   
 #password is 1234
 def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
                 homePhone = "NULL",officePhone = "NULL",pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
