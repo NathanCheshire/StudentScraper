@@ -465,8 +465,8 @@ def parsePost(text):
     for person in tag:
         personSoup = BeautifulSoup(str(person),'html.parser')
 
-        first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG))).replace("'","").replace('"',"")
-        last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG))).replace("'","").replace('"',"")
+        first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG)))
+        last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG)))
         picturePublic = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPUBLIC_TAG)))
         picturePrivate = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPRIVATE_TAG)))
         email = re.compile(r'<.*?>').sub('', str(personSoup.find(EMAIL_TAG)))
@@ -534,23 +534,31 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
                 homePhone = "NULL",officePhone = "NULL",pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
                 homeStreet = "NULL",homeCity = "NULL",homeState = "NULL",homeZip = "NULL",homeCountry = "NULL",
                 officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL"):
-    
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = "msu_students" ,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
+                
+    #try catch since duplicates will be skipped
+    try:
+        con = psycopg2.connect(
+            host = "cypherlenovo",
+            database = "msu_students" ,
+            user = 'postgres',
+            password = '1234',
+            port = '5433'
+        )
 
-    cur = con.cursor()
-    command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
-    print(command)
-    cur.execute(command)
-    con.commit()
+        #TODO everything here could have quotes and shit that mess up this string building
+        # fix that, also add a try catch for inserting since duplicates will crash the program
+        # for all inputs everywhere there's a ' replace with \' and same for " to \"
 
-    cur.close()
-    con.close()
+        cur = con.cursor()
+        command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
+        print(command)
+        cur.execute(command)
+        con.commit()
+
+        cur.close()
+        con.close()
+    except:
+        pass
 
 if __name__ == "__main__":
     apiMain()
