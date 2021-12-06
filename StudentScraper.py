@@ -2,6 +2,7 @@ import os
 import requests
 import re
 import math
+import psycopg2
 import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -360,10 +361,10 @@ def apiMain():
     if exe:
         print("Executable found")
 
-        option = webdriver.ChromeOptions()
-        option.add_argument('headless')
-        driver = webdriver.Chrome(options = option)
-
+        #option = webdriver.ChromeOptions()
+        #option.add_argument('headless')
+        #driver = webdriver.Chrome(options = option)
+        driver = webdriver.Chrome()
         
         driver.get("https://my.msstate.edu/")
 
@@ -525,13 +526,29 @@ def parsePost(text):
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
-        #insert into db with primary key as netid, if that's null then we're kind of fucked anyway
-        print(first, last, picturePublic, picturePrivate, email, 
-                major, class_, homePhone, officePhone, 
-                netid,pidm,selected,isStudent,isAffiliate,isRetired,
-                homeStreet,homeCity,homeState,homeZip,homeCountry,
-                officeStreet,officeCity,officeState,officeZip,officeCountry,
-                sep = ',')
+        insertPG()   
+#password is 1234
+def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
+                homePhone = "NULL",officePhone = "NULL",pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
+                homeStreet = "NULL",homeCity = "NULL",homeState = "NULL",homeZip = "NULL",homeCountry = "NULL",
+                officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL"):
+    
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students" ,
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    cur = con.cursor()
+    command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
+    print(command)
+    cur.execute(command)
+    con.commit()
+
+    cur.close()
+    con.close()
 
 if __name__ == "__main__":
     apiMain()
