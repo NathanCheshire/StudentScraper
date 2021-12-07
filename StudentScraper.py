@@ -579,4 +579,5 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
         pass
 
 if __name__ == "__main__":
-    apiMain(startVowel = 'o', startPage = 808)
+    apiMain(startVowel = 'a', startPage = 0)
+    
