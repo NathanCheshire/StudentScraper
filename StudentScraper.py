@@ -36,6 +36,7 @@ QUERRY_SLEEP_TIMEOUT = 1
 alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
                 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
                 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+vowels = ['a','e','i','o','u','y']
 
 firstFileName = ""
 
@@ -356,7 +357,7 @@ def removeDuplicateLines(filename):
 #################################################################################################################################
 
 #webscraping method directly using the backend API provided user is authenticated
-def apiMain():
+def apiMain(startVowel = 'a', startPage = '0'):
     print("Begining scraping sequence")
     exe = os.path.exists(PATH)
 
@@ -379,13 +380,13 @@ def apiMain():
 
         driver.find_element(By.NAME,'submit').click()
 
-        #DUO handling
-        masterElemnString = "login"
-        myElem = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, masterElemnString)))
-        print(f"DUO {masterElemnString} loaded")
+        #Wait for Duo to load
+        masterDuoID = "login"
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, masterDuoID)))
+        print(f"DUO {masterDuoID} loaded")
 
-        #switch to duo iFrame
+        #switch to duo iFrame, this took me like 3 hours to figure out kek
         iFrameTitle = "duo_iframe"
         driver.switch_to.frame(iFrameTitle)
 
@@ -408,36 +409,50 @@ def apiMain():
         session = requests.Session()
         for cookie in yummyCookies:
             session.cookies.set(cookie['name'], cookie['value'])
-        
-        vowels = ['a','e','i','o','u','y']
+                
         #loop through all last name contains a vowel
-        for last in vowels:
-            #get the number of records there are with this search to construct our loops accordingly
-            totalResultsRet = post(session, '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"0","type":"s"}')
-            totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
-            pages = math.ceil(totalResults / 10.0)
-            print(pages,'pages for last:',last)
-
-            if totalResults == 0:
+        for vowelIndex in range(len(vowels)):
+            #start at starting vowel in case we're resuming the script after pausing it
+            if vowelIndex < vowels.index(startVowel):
                 continue
 
+            #get the number of records there are with this search to construct our loops accordingly
+            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29')
+            totalResultsRet = post(session, formData)
+
+            print('Attempting to parse for page number:',totalResultsRet)
+            totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
+
+            pages = math.ceil(totalResults / 10.0)
+            print(pages,'pages for last:', vowels[vowelIndex])
+
+            if totalResults == 0:
+                continue  
+
             for page in range(pages + 1):
-                print("Page",page,"of",pages,"last:",last)
-                postData = '{"searchType":"Advanced","netid":"nvc29","field1":"lname","oper1":"contain","value1":"' + last + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
-                parsePost(post(session, postData))
+                #only skip pages if we're also on the start vowel
+                if vowels[vowelIndex] == startVowel and int(page) < int(startPage):
+                    continue
+
+                print("Page",page,"of",pages,"for last contains", vowels[vowelIndex])
+                parsePost(post(session, constructFormString(vowels[vowelIndex], str(page), 'nvc29')))
 
                 #reasonable timeout
-                time.sleep(0.5)
+                time.sleep(0.25)
 
         print("Finished all last contains vowels, exiting scraper")
 
     else:
         print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
 
-POST = 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
+def constructFormString(lnameContains, page, netid):
+    return '{"searchType":"Advanced","netid":"' + netid + '","field1":"lname","oper1":"contain","value1":"' + lnameContains + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
+
+def getPostString():
+    return 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
 
 def post(session, payload):
-    return session.post(POST, data = dict(formData = payload)).text
+    return session.post(getPostString(), data = dict(formData = payload)).text
 
 #tags for parsing people
 PERSON_TAG = 'person'
@@ -550,8 +565,6 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
         for local in locals():
             local = local.replace("'","\'").replace('"','\"')
 
-        #implement start page for a given start vowel
-
         cur = con.cursor()
         command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
 
@@ -565,62 +578,5 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
     except:
         pass
 
-#TODO - use a-z query and sum for this, shouldn't take but like 5 minutes
-def totalRecords():
-    exe = os.path.exists(PATH)
-
-    if exe:
-        option = webdriver.ChromeOptions()
-        option.add_argument('headless')
-        driver = webdriver.Chrome(options = option)
-        
-        driver.get("https://my.msstate.edu/")
-
-        elem = driver.find_element(By.ID,USERNAME_ID)
-        elem.clear()
-        elem.send_keys(INJECTION_NAME)
-
-        elem = driver.find_element(By.ID, PASSWORD_ID)
-        elem.clear()
-        elem.send_keys(INJECTION_PASSWORD)
-
-        driver.find_element(By.NAME,'submit').click()
-
-        #DUO handling
-        masterElemnString = "login"
-        myElem = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, masterElemnString)))
-        print(f"DUO {masterElemnString} loaded")
-
-        #switch to duo iFrame
-        iFrameTitle = "duo_iframe"
-        driver.switch_to.frame(iFrameTitle)
-
-        #wait for push button to load and click it
-        pushButtontext = "Send Me a Push"
-        WebDriverWait(driver, PUSH_TIMEOUT).until(
-            EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
-        print("Push sent")
-
-        #wait for directory to load to confirm we're in the system
-        directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
-        WebDriverWait(driver, 40).until(
-            EC.presence_of_element_located((By.ID, directoryID)))
-        print("Directory element loaded")
-        
-        #copy over cookies from duo authentication
-        yummyCookies = driver.get_cookies()
-
-        #the fact that cookies don't timeout is insane like what are you doing state?
-        session = requests.Session()
-        for cookie in yummyCookies:
-            session.cookies.set(cookie['name'], cookie['value'])
-        
-        records = 0
-
-        #how to find out the total number without duplicates?
-
-        print(f'There are a total of {records} public records from the MSU directory')
-
 if __name__ == "__main__":
-    apiMain()
+    apiMain(startVowel = 'o', startPage = 808)
