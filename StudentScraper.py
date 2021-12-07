@@ -354,7 +354,68 @@ def removeDuplicateLines(filename):
     except:
         pass
 
-#################################################################################################################################
+###########################################################
+
+#outputs how many student records you should have in pg after running either method
+def totalAccessibleStudentRecords():
+    if os.path.exists(PATH):
+        option = webdriver.ChromeOptions()
+        option.add_argument('headless')
+        driver = webdriver.Chrome(options = option)
+        
+        driver.get("https://my.msstate.edu/")
+
+        elem = driver.find_element(By.ID,USERNAME_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_NAME)
+
+        elem = driver.find_element(By.ID, PASSWORD_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_PASSWORD)
+
+        driver.find_element(By.NAME,'submit').click()
+
+        #Wait for Duo to load
+        masterDuoID = "login"
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, masterDuoID)))
+        print(f"DUO {masterDuoID} loaded")
+
+        #switch to duo iFrame, this took me like 3 hours to figure out kek
+        iFrameTitle = "duo_iframe"
+        driver.switch_to.frame(iFrameTitle)
+
+        #wait for push button to load and click it
+        pushButtontext = "Send Me a Push"
+        WebDriverWait(driver, PUSH_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
+        print("Push sent")
+
+        #wait for directory to load to confirm we're in the system
+        directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
+        WebDriverWait(driver, 40).until(
+            EC.presence_of_element_located((By.ID, directoryID)))
+        
+        #copy over cookies from duo authentication
+        yummyCookies = driver.get_cookies()
+
+        #the fact that cookies don't timeout is insane like what are you doing state?
+        session = requests.Session()
+        for cookie in yummyCookies:
+            session.cookies.set(cookie['name'], cookie['value'])
+
+        recordSum = 0
+                
+        for vowelIndex in range(len(vowels)):
+            #get the number of records there are with this search to construct our loops accordingly
+            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29')
+            totalResultsRet = post(session, formData)
+
+            print('Attempting to parse for page number:',totalResultsRet)
+            totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
+            recordSum = recordSum + totalResults
+
+        print("Total accessible student records:", recordSum)
 
 #webscraping method directly using the backend API provided user is authenticated
 def apiMain(startVowel = 'a', startPage = '0'):
@@ -409,7 +470,7 @@ def apiMain(startVowel = 'a', startPage = '0'):
         session = requests.Session()
         for cookie in yummyCookies:
             session.cookies.set(cookie['name'], cookie['value'])
-                
+
         #loop through all last name contains a vowel
         for vowelIndex in range(len(vowels)):
             #start at starting vowel in case we're resuming the script after pausing it
@@ -454,7 +515,8 @@ def getPostString():
 def post(session, payload):
     return session.post(getPostString(), data = dict(formData = payload)).text
 
-#tags for parsing people
+#tags for parsing people ##################################
+
 PERSON_TAG = 'person'
 LASTNAME_TAG = 'lastname'
 FIRSTNAME_TAG = 'firstname'
@@ -472,6 +534,8 @@ ADDRESS_CITY_TAG = 'city'
 ADDRESS_STATE_TAG = 'state'
 ADDRESS_ZIP_TAG = 'zip'
 ADDRESS_COUNTRY_TAG = 'country'
+
+###########################################################
 
 def parsePost(text):
     #create soup of text
@@ -578,6 +642,11 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
     except:
         pass
 
+#TODO click checkbox anytime duo is involed to remember for 24 hours,
+#TODO add cookie storage
+#TODO separate out methods into separate files
+#actually you should probably create a get cookies method that will do all this for you
+# and then return the cookies that last for 24 hours
+# also store in a GITIGNORE file inside of a folder
 if __name__ == "__main__":
-    apiMain(startVowel = 'a', startPage = 0)
-    
+    apiMain(startVowel = 'i', startPage = 760)
