@@ -15,7 +15,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait 
 
 #relative path to exe
-PATH = "Exes/chromedriver.exe"
+PATH = "chromedriver.exe"
 
 #your account details, I'm storing them inside of a file that is ignored by git for security reasons :P
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
@@ -33,12 +33,12 @@ QUERRY_SLEEP_TIMEOUT = 1
 
 vowels = ['a','e','i','o','u','y']
 
-firstFileName = ""
-
 #outputs how many student records you should have in pg after running either method
 def totalAccessibleStudentRecords():
     if os.path.exists(PATH):
         option = webdriver.ChromeOptions()
+
+        #don't open Chrome window
         option.add_argument('headless')
         driver = webdriver.Chrome(options = option)
         
@@ -310,7 +310,7 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
 
         cur = con.cursor()
         command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
-
+        print("NetID:",netid)
         #run and commit query
         cur.execute(command)
         con.commit()

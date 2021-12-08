@@ -14,7 +14,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait 
 
 #relative path to exe
-PATH = "Exes/chromedriver.exe"
+PATH = "chromedriver.exe"
 
 #your account details, I'm storing them inside of a file that is ignored by git for security reasons :P
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
