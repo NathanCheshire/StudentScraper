@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import json
 
-def main():
+def main(startFrom = 0):
     print('Beginning visualizations...')
 
     con = psycopg2.connect(
@@ -32,12 +32,15 @@ def main():
     key = open("geokey.key").read()
 
     #for all home addresses, insert into home_addresses table
-    for homeAddress in homeAddresses:
+    for homeAddressInd in range(len(homeAddresses)):
+        homeAddress = homeAddresses[homeAddressInd]
         netid = homeAddress[0]
-        print('On netid:',netid)
+        print('On netid:',netid,homeAddressInd,'/',len(homeAddresses))
 
         #continue if netid already in table since we don't want to make a geo request
-        if '(\'' + netid + '\',)' in str(getNetIDs()):
+        if '(\'' + netid + '\',)' in str(getNetIDs('home_addresses')):
+            continue
+        elif homeAddressInd < startFrom:
             continue
 
         addressString = homeAddress[1] + "," + homeAddress[2] + "," + homeAddress[3] + "," + homeAddress[4] + "," + homeAddress[5]
@@ -56,7 +59,7 @@ def main():
 
     #insert into officeAddresses/homeAddresses with PK as netid
 
-def getNetIDs():
+def getNetIDs(tablename = 'students'):
     con = psycopg2.connect(
             host = "cypherlenovo",
             database = "msu_students",
@@ -66,7 +69,7 @@ def getNetIDs():
         )
 
     cur = con.cursor()
-    command = "select netid from students"
+    command = "select netid from " + tablename
     cur.execute(command)
 
     return cur.fetchall()
