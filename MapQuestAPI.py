@@ -18,7 +18,8 @@ def main(startFrom = 0):
 
     command = '''SELECT netid, officestreet, officecity, officestate, officezip, officecountry 
                 from students
-                where officestreet != 'NULL';'''
+                where officestreet != 'NULL'
+                and netid in (select netid from students where homestreet != officestreet);'''
     
     cur.execute(command)
     officeAddresses = cur.fetchall()

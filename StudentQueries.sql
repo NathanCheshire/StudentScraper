@@ -105,6 +105,9 @@ from home_addresses;
 select count(*) 
 from office_addresses;
 
+--this should be the num in the office_addresses table after script is done
+select count(*) from students where officestreet != 'NULL'
+
 --join tables
 select * 
 from home_addresses 
