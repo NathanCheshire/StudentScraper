@@ -40,7 +40,7 @@ def createUsaHeatmap():
 
     print('Heatmap generated and saved as StudentHeat.html')
     
-def createWorldLabeledMap():
+def createWorldLabeledMap(waypoints = 500):
     print('Generating map with waypoints at addresses with firstname, lastname, and netid')
 
     con = psycopg2.connect(
@@ -68,9 +68,8 @@ def createWorldLabeledMap():
     cityIndex = 5
     stateIndex = 6
 
-    #TODO maybe form an address too?
-
-    waypoints = 500
+    if waypoints == 0:
+        waypoints = len(arr)
 
     for i in range(0, waypoints):
         lat = arr[i][latIndex]
@@ -84,6 +83,7 @@ def createWorldLabeledMap():
         folium.Marker(
             location=[lat, lon],
             popup = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
+            icon = folium.Icon(color='darkred')
         ).add_to(m)
 
     saveName = 'Maps/StudentNameMap_' + str(waypoints) + '_Waypoints.html'
@@ -93,4 +93,6 @@ def createWorldLabeledMap():
 if __name__ == '__main__':
     #generateStaticImage(33.449945,-88.781702,1000,1000)
     #createUsaHeatmap()
-    createWorldLabeledMap()
+
+    #todo this method can't handle all the addresses, find a better way to show waypoints
+    createWorldLabeledMap(waypoints = 0)
