@@ -52,7 +52,8 @@ def createWorldLabeledMap():
     )
 
     df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
-                              students.netid, students.firstname, students.lastname 
+                              students.netid, students.firstname, students.lastname,
+                              students.homecity, students.homestate
                               from home_addresses
                               inner join students on home_addresses.netid = students.netid''', con)
 
@@ -64,6 +65,10 @@ def createWorldLabeledMap():
     netidIndex = 2
     firstnameIndex = 3
     lastnameIndex = 4
+    cityIndex = 5
+    stateIndex = 6
+
+    #TODO maybe form an address too?
 
     waypoints = 500
 
@@ -73,10 +78,12 @@ def createWorldLabeledMap():
         netid = arr[i][netidIndex]
         firstname = arr[i][firstnameIndex]
         lastname = arr[i][lastnameIndex]
+        city = arr[i][cityIndex]
+        state = arr[i][stateIndex]
 
         folium.Marker(
             location=[lat, lon],
-            popup = str(firstname + " " + lastname + ", " + netid),
+            popup = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
         ).add_to(m)
 
     saveName = 'Maps/StudentNameMap_' + str(waypoints) + '_Waypoints.html'
