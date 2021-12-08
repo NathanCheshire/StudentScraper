@@ -1,4 +1,7 @@
 import psycopg2
+import pandas as pd
+import requests
+import json
 
 def main():
     print('Beginning visualizations...')
@@ -31,11 +34,35 @@ def main():
     officeAddresses = cur.fetchall()
     print("Found",len(officeAddresses),"office addresses that are not null")
 
-    #visualzations after getting lat/lons
-
     #avoid memory leaks
     cur.close()
     con.close()
+
+    #convert home addresses to string representations
+    fullStringHomeAddresses = []
+
+    for homeAddress in homeAddresses:
+        fullStringHomeAddresses.append(homeAddress[0] + "," + homeAddress[1] + "," + 
+                                       homeAddress[2] + "," + homeAddress[3] + "," +
+                                       homeAddress[4])
+
+    testAddress = 'stonks'
+    key = open("geokey.key").read()
+
+    params = {
+        "key" : key,
+        "location" : testAddress
+    }
+
+    response = requests.get('http://www.mapquestapi.com/geocoding/v1/address', params = params)
+
+    data = json.loads(response.text)
+
+    lat = data['results'][0]['locations'][0]['latLng']['lat']
+    lng = data['results'][0]['locations'][0]['latLng']['lng']
+    mapUrl = data['results'][0]['locations'][0]['mapUrl']
+
+    #insert into officeAddresses/homeAddresses with PK as netid
 
 if __name__ == "__main__":
     main()
