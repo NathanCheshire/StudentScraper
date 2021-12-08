@@ -33,12 +33,18 @@ def main():
 
     #for all home addresses, insert into home_addresses table
     for homeAddress in homeAddresses:
-        #todo continue if null in any part
-
         netid = homeAddress[0]
         print('On netid:',netid)
+
+        #continue if netid already in table since we don't want to make a geo request
+        if '(\'' + netid + '\',)' in str(getNetIDs()):
+            continue
+
         addressString = homeAddress[1] + "," + homeAddress[2] + "," + homeAddress[3] + "," + homeAddress[4] + "," + homeAddress[5]
     
+        #strip nulls out
+        addressString = addressString.replace('NULL','')
+
         response = getResponse(params = generateParams(key, addressString))
         data = json.loads(response.text)
 
@@ -50,19 +56,34 @@ def main():
 
     #insert into officeAddresses/homeAddresses with PK as netid
 
-def insertAddress(netid, database, lat = "NULL", lon = "NULL", mapurl = "NULL"):
+def getNetIDs():
+    con = psycopg2.connect(
+            host = "cypherlenovo",
+            database = "msu_students",
+            user = 'postgres',
+            password = '1234',
+            port = '5433'
+        )
+
+    cur = con.cursor()
+    command = "select netid from students"
+    cur.execute(command)
+
+    return cur.fetchall()
+
+def insertAddress(netid, table, lat = "NULL", lon = "NULL", mapurl = "NULL"):
     #try catch since duplicates will be skipped
     try:
         con = psycopg2.connect(
             host = "cypherlenovo",
-            database = database,
+            database = "msu_students",
             user = 'postgres',
             password = '1234',
             port = '5433'
         )
 
         cur = con.cursor()
-        command = "INSERT INTO students (netid,lat,lon,mapurl) VALUES ('{0}','{1}','{2}','{3}')".format(netid,lat,lon,mapurl)
+        command = "INSERT INTO " + table + " (netid,lat,lon,mapurl) VALUES ('{0}','{1}','{2}','{3}')".format(netid,lat,lon,mapurl)
         print('Executing:',command)
         cur.execute(command)
         con.commit()
@@ -70,7 +91,8 @@ def insertAddress(netid, database, lat = "NULL", lon = "NULL", mapurl = "NULL"):
         #avoid memory leaks
         cur.close()
         con.close()
-    except:
+    except Exception as e:
+        print(e)
         pass
 
 def generateParams(key, location):
