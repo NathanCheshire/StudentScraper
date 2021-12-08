@@ -12,3 +12,7 @@ This method will simply search through all permutations of first,last containing
 ## Method 2: POST requests
 
 Directly accessing the backend and sending post requests to acquire data is a much faster and more efficient solution. By making a request in Chrome, one can press f12 and go to the networks tab to see any requests recently made. You can then take the request URL and POST data (formData) in this case, and write a script to send POST requests and parse the returned data. First, method 2 starts a selenium instance and authenticates itself. The cookies generated via this authentication are then copied over to the python requests object (it isn't necessary to send them with every POST). Method 2 also inserts all parsed student data into a postgres backend for easy storage/access. Data visualizations with the collected student data are soon to come.
+
+# Student Queries
+
+Assuming you have created a Posgres database on your local machine with the same schema I outlined in inside of `Poster.py` you should have success executing any of the queries inside of `StudentQueries.sql`. This is mostly a scratch pad, however.
