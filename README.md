@@ -3,11 +3,11 @@
 
 Student Scraper is a web scraping tool that uses Python and Selenium to scrape student details from MSU's myState.
 
-logindata.txt should exist in the same directory as `StudentScraper.py` and contain your netid and password in the following format: netid,password.
+logindata.txt should exist in the same directory as `Poster.py` or `WebCrawler.py` and contain your netid and password in the following format: netid,password.
 
 ## Method 1: WebCrawling
 
-This method will simply search through all permutations of first,last containing aa aa, aa ab,...,zz zz, until all student records have been collected and saved to text files. This was my first approach to this problem and is quite inefficient so I would not recommend using WebScraper.py. This section did, however, teach me a lot about selenium, webscraping, and webcrawling. I was able to figure out how to pass both authentication pages using selenium via this approach.
+This method will simply search through all permutations of first,last containing aa aa, aa ab,...,zz zz, until all student records have been collected and saved to text files. This was my first approach to this problem and is quite inefficient so I would not recommend using `WebCrawler.py`. This section did, however, teach me a lot about selenium, webscraping, and webcrawling. I was able to figure out how to pass both authentication pages using selenium via this approach.
 
 ## Method 2: POST requests
 

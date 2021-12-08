@@ -97,8 +97,13 @@ where homestreet like '%College View%' or officestreet like '%College View%'
 begin;
 commit;
 
---addresses
-select count(*) from home_addresses;
+--home addresses
+select count(*) 
+from home_addresses;
+
+--office addresses
+select count(*) 
+from office_addresses;
 
 --join tables
 select * 

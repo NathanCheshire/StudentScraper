@@ -16,14 +16,13 @@ def main(startFrom = 0):
 
     cur = con.cursor()
 
-    #get home addresses
-    command = '''SELECT netid, homestreet, homecity, homestate, homezip, homecountry 
+    command = '''SELECT netid, officestreet, officecity, officestate, officezip, officecountry 
                 from students
-                where homestreet != 'NULL';'''
+                where officestreet != 'NULL';'''
     
     cur.execute(command)
-    homeAddresses = cur.fetchall()
-    print("Found",len(homeAddresses),"home addresses that are not null")
+    officeAddresses = cur.fetchall()
+    print("Found",len(officeAddresses),"office addresses that are not null")
 
     #avoid memory leaks
     cur.close()
@@ -31,20 +30,19 @@ def main(startFrom = 0):
 
     key = open("geokey.key").read()
 
-    #for all home addresses, insert into home_addresses table
-    for homeAddressInd in range(len(homeAddresses)):
-        if homeAddressInd < startFrom:
+    for officeAddressInd in range(len(officeAddresses)):
+        if officeAddressInd < startFrom:
             continue
 
-        homeAddress = homeAddresses[homeAddressInd]
-        netid = homeAddress[0]
-        print('On netid:',netid,homeAddressInd,'/',len(homeAddresses))
+        officeAddress = officeAddresses[officeAddressInd]
+        netid = officeAddress[0]
+        print('On netid:',netid,officeAddressInd + 1,'/',len(officeAddresses))
 
         #continue if netid already in table since we don't want to make a geo request
-        if '(\'' + netid + '\',)' in str(getNetIDs('home_addresses')):
+        if '(\'' + netid + '\',)' in str(getNetIDs('office_addresses')):
             continue
        
-        addressString = homeAddress[1] + "," + homeAddress[2] + "," + homeAddress[3] + "," + homeAddress[4] + "," + homeAddress[5]
+        addressString = officeAddress[1] + "," + officeAddress[2] + "," + officeAddress[3] + "," + officeAddress[4] + "," + officeAddress[5]
     
         #strip nulls out
         addressString = addressString.replace('NULL','')
@@ -55,9 +53,7 @@ def main(startFrom = 0):
         lat = data['results'][0]['locations'][0]['latLng']['lat']
         lng = data['results'][0]['locations'][0]['latLng']['lng']
 
-        insertAddress(netid, "home_addresses", lat, lng)
-
-    #insert into officeAddresses/homeAddresses with PK as netid
+        insertAddress(netid, "office_addresses", lat, lng)
 
 def getNetIDs(tablename = 'students'):
     con = psycopg2.connect(
@@ -110,4 +106,4 @@ def getResponse(params):
     return requests.get('http://www.mapquestapi.com/geocoding/v1/address', params = params)
 
 if __name__ == "__main__":
-    main(startFrom=15000)
+    main(startFrom = 0)
