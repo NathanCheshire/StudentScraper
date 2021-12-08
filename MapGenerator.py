@@ -36,11 +36,54 @@ def createUsaHeatmap():
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
     m.add_child(plugins.HeatMap(arr, radius = 15))
-    m.save("StudentHeat.html")
+    m.save("Maps/StudentHeat.html")
 
     print('Heatmap generated and saved as StudentHeat.html')
     
+def createWorldLabeledMap():
+    print('Generating map with waypoints at addresses with firstname, lastname, and netid')
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students",
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
+                              students.netid, students.firstname, students.lastname 
+                              from home_addresses
+                              inner join students on home_addresses.netid = students.netid''', con)
+
+    m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
+    arr = df.values
+
+    latIndex = 0
+    lonIndex = 1
+    netidIndex = 2
+    firstnameIndex = 3
+    lastnameIndex = 4
+
+    waypoints = 500
+
+    for i in range(0, waypoints):
+        lat = arr[i][latIndex]
+        lon = arr[i][lonIndex]
+        netid = arr[i][netidIndex]
+        firstname = arr[i][firstnameIndex]
+        lastname = arr[i][lastnameIndex]
+
+        folium.Marker(
+            location=[lat, lon],
+            popup = str(firstname + " " + lastname + ", " + netid),
+        ).add_to(m)
+
+    saveName = 'Maps/StudentNameMap_' + str(waypoints) + '_Waypoints.html'
+    m.save(saveName)
+    print('Map Generated and saved as',saveName)
+    
 if __name__ == '__main__':
     #generateStaticImage(33.449945,-88.781702,1000,1000)
-    createUsaHeatmap()
-    #todo label each person by their first and last name and netid below that
+    #createUsaHeatmap()
+    createWorldLabeledMap()
