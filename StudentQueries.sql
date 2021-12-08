@@ -94,9 +94,16 @@ select * from students
 where homestreet like '%College View%' or officestreet like '%College View%'
 
 --transactions
-
 begin;
 commit;
+
+--addresses
+select count(*) from home_addresses;
+
+--join tables
+select * 
+from home_addresses 
+inner join students on home_addresses.netid = students.netid;
 
 --leave this space
 

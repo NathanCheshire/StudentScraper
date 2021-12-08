@@ -33,6 +33,9 @@ def main(startFrom = 0):
 
     #for all home addresses, insert into home_addresses table
     for homeAddressInd in range(len(homeAddresses)):
+        if homeAddressInd < startFrom:
+            continue
+
         homeAddress = homeAddresses[homeAddressInd]
         netid = homeAddress[0]
         print('On netid:',netid,homeAddressInd,'/',len(homeAddresses))
@@ -40,9 +43,7 @@ def main(startFrom = 0):
         #continue if netid already in table since we don't want to make a geo request
         if '(\'' + netid + '\',)' in str(getNetIDs('home_addresses')):
             continue
-        elif homeAddressInd < startFrom:
-            continue
-
+       
         addressString = homeAddress[1] + "," + homeAddress[2] + "," + homeAddress[3] + "," + homeAddress[4] + "," + homeAddress[5]
     
         #strip nulls out
@@ -53,9 +54,8 @@ def main(startFrom = 0):
 
         lat = data['results'][0]['locations'][0]['latLng']['lat']
         lng = data['results'][0]['locations'][0]['latLng']['lng']
-        mapUrl = data['results'][0]['locations'][0]['mapUrl']
 
-        insertAddress(netid, "home_addresses", lat, lng, mapUrl)
+        insertAddress(netid, "home_addresses", lat, lng)
 
     #insert into officeAddresses/homeAddresses with PK as netid
 
@@ -74,7 +74,7 @@ def getNetIDs(tablename = 'students'):
 
     return cur.fetchall()
 
-def insertAddress(netid, table, lat = "NULL", lon = "NULL", mapurl = "NULL"):
+def insertAddress(netid, table, lat = "NULL", lon = "NULL"):
     #try catch since duplicates will be skipped
     try:
         con = psycopg2.connect(
@@ -86,7 +86,7 @@ def insertAddress(netid, table, lat = "NULL", lon = "NULL", mapurl = "NULL"):
         )
 
         cur = con.cursor()
-        command = "INSERT INTO " + table + " (netid,lat,lon,mapurl) VALUES ('{0}','{1}','{2}','{3}')".format(netid,lat,lon,mapurl)
+        command = "INSERT INTO " + table + " (netid,lat,lon) VALUES ('{0}','{1}','{2}')".format(netid,lat,lon)
         print('Executing:',command)
         cur.execute(command)
         con.commit()
@@ -110,4 +110,4 @@ def getResponse(params):
     return requests.get('http://www.mapquestapi.com/geocoding/v1/address', params = params)
 
 if __name__ == "__main__":
-    main()
+    main(startFrom=15000)
