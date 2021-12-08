@@ -17,6 +17,22 @@ def generateStaticImage(lat, lon, width, height):
     im = Image.open(requests.get(baseString, stream=True).raw)
     im.show()
 
+def generateStaticImageFromNetid(netid):
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students",
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query(f'select lat,lon from home_addresses where netid = \'{netid}\'', con)
+    arr = df.values
+    lat = arr[0][0]
+    lon = arr[0][1]
+
+    generateStaticImage(lat, lon, 1000, 1000)
+
 def createUsaHeatmap():
     print('Generating heatmap based on home addresses')
 
@@ -91,8 +107,9 @@ def createWorldLabeledMap(waypoints = 500):
     print('Map Generated and saved as',saveName)
     
 if __name__ == '__main__':
-    #generateStaticImage(33.449945,-88.781702,1000,1000)
     #createUsaHeatmap()
 
     #todo this method can't handle all the addresses, find a better way to show waypoints
-    createWorldLabeledMap(waypoints = 0)
+    #createWorldLabeledMap(waypoints = 500)
+
+    generateStaticImageFromNetid('nvc29')

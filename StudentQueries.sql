@@ -7,6 +7,9 @@
 select count(*) 
 from students;
 
+select *
+from students;
+
 --distinct majors at msu
 select distinct major 
 from students; 
@@ -69,7 +72,7 @@ imit 10;
 --graduating software engineers
 select netid, firstname, lastname, major, class
 from students
-where major = 'Software Engineering' and class = 'Senior';
+where major = 'Mechanical Engineering';
 
 --occurneces of netid numbers
 select count(*) as occurences, netidnum
@@ -112,6 +115,17 @@ select count(*) from students where officestreet != 'NULL'
 select * 
 from home_addresses 
 inner join students on home_addresses.netid = students.netid;
+
+--by state number of people
+select count(*)
+from students
+where homestate = 'MS';
+
+select count(*)
+from students
+where homestate = 'LA';
+
+select * from students where firstname = 'Mallory' and lastname = 'Duke'
 
 --leave this space
 
