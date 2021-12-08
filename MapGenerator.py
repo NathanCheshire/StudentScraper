@@ -6,7 +6,7 @@ import psycopg2
 import folium
 from folium import plugins
 
-def generateStaticImage(lat, lon, width, height):
+def generateStaticImage(lat, lon, width, height, save = False):
     key = open("geokey.key").read()
     
     baseString = ('http://www.mapquestapi.com/staticmap/v5/map?' 
@@ -16,8 +16,9 @@ def generateStaticImage(lat, lon, width, height):
 
     im = Image.open(requests.get(baseString, stream=True).raw)
     im.show()
+    im.save('Figures/' + str(lat) + "-" + str(lon) + ".png")
 
-def generateStaticImageFromNetid(netid):
+def generateStaticImageFromNetid(netid, save = False):
     con = psycopg2.connect(
         host = "cypherlenovo",
         database = "msu_students",
@@ -31,7 +32,7 @@ def generateStaticImageFromNetid(netid):
     lat = arr[0][0]
     lon = arr[0][1]
 
-    generateStaticImage(lat, lon, 1000, 1000)
+    generateStaticImage(lat, lon, 1000, 1000, save)
 
 def createUsaHeatmap():
     print('Generating heatmap based on home addresses')
@@ -112,4 +113,4 @@ if __name__ == '__main__':
     #todo this method can't handle all the addresses, find a better way to show waypoints
     #createWorldLabeledMap(waypoints = 500)
 
-    generateStaticImageFromNetid('nvc29')
+    generateStaticImageFromNetid('', save = True)

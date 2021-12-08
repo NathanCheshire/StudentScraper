@@ -66,8 +66,7 @@ from students;
 --select short sample
 select * 
 from students 
-order by firstname l
-imit 10;
+order by firstname limit 10;
 
 --graduating software engineers
 select netid, firstname, lastname, major, class
@@ -94,7 +93,7 @@ order by class;
 
 --college view people 
 select * from students 
-where homestreet like '%College View%' or officestreet like '%College View%'
+where homestreet like '%College View%' or officestreet like '%College View%';
 
 --transactions
 begin;
@@ -124,8 +123,6 @@ where homestate = 'MS';
 select count(*)
 from students
 where homestate = 'LA';
-
-select * from students where firstname = 'Mallory' and lastname = 'Duke'
 
 --leave this space
 
