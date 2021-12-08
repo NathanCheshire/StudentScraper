@@ -36,47 +36,8 @@ vowels = ['a','e','i','o','u','y']
 #outputs how many student records you should have in pg after running either method
 def totalAccessibleStudentRecords():
     if os.path.exists(PATH):
-        option = webdriver.ChromeOptions()
-
-        #don't open Chrome window
-        option.add_argument('headless')
-        driver = webdriver.Chrome(options = option)
-        
-        driver.get("https://my.msstate.edu/")
-
-        elem = driver.find_element(By.ID,USERNAME_ID)
-        elem.clear()
-        elem.send_keys(INJECTION_NAME)
-
-        elem = driver.find_element(By.ID, PASSWORD_ID)
-        elem.clear()
-        elem.send_keys(INJECTION_PASSWORD)
-
-        driver.find_element(By.NAME,'submit').click()
-
-        #Wait for Duo to load
-        masterDuoID = "login"
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, masterDuoID)))
-        print(f"DUO {masterDuoID} loaded")
-
-        #switch to duo iFrame, this took me like 3 hours to figure out kek
-        iFrameTitle = "duo_iframe"
-        driver.switch_to.frame(iFrameTitle)
-
-        #wait for push button to load and click it
-        pushButtontext = "Send Me a Push"
-        WebDriverWait(driver, PUSH_TIMEOUT).until(
-            EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
-        print("Push sent")
-
-        #wait for directory to load to confirm we're in the system
-        directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
-        WebDriverWait(driver, 40).until(
-            EC.presence_of_element_located((By.ID, directoryID)))
-        
         #copy over cookies from duo authentication
-        yummyCookies = driver.get_cookies()
+        yummyCookies = getCookies()
 
         #the fact that cookies don't timeout is insane like what are you doing state?
         session = requests.Session()
@@ -98,52 +59,13 @@ def totalAccessibleStudentRecords():
 
 #webscraping method directly using the backend API provided user is authenticated
 def apiMain(startVowel = 'a', startPage = '0'):
-    print("Begining scraping sequence")
+    print("Begining post sequence")
     exe = os.path.exists(PATH)
 
     if exe:
         print("Executable found")
 
-        option = webdriver.ChromeOptions()
-        option.add_argument('headless')
-        driver = webdriver.Chrome(options = option)
-        
-        driver.get("https://my.msstate.edu/")
-
-        elem = driver.find_element(By.ID,USERNAME_ID)
-        elem.clear()
-        elem.send_keys(INJECTION_NAME)
-
-        elem = driver.find_element(By.ID, PASSWORD_ID)
-        elem.clear()
-        elem.send_keys(INJECTION_PASSWORD)
-
-        driver.find_element(By.NAME,'submit').click()
-
-        #Wait for Duo to load
-        masterDuoID = "login"
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, masterDuoID)))
-        print(f"DUO {masterDuoID} loaded")
-
-        #switch to duo iFrame, this took me like 3 hours to figure out kek
-        iFrameTitle = "duo_iframe"
-        driver.switch_to.frame(iFrameTitle)
-
-        #wait for push button to load and click it
-        pushButtontext = "Send Me a Push"
-        WebDriverWait(driver, PUSH_TIMEOUT).until(
-            EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
-        print("Push sent")
-
-        #wait for directory to load to confirm we're in the system
-        directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
-        WebDriverWait(driver, 40).until(
-            EC.presence_of_element_located((By.ID, directoryID)))
-        print("Directory element loaded")
-        
-        #copy over cookies from duo authentication
-        yummyCookies = driver.get_cookies()
+        yummyCookies = getCookies()
 
         #the fact that cookies don't timeout is insane like what are you doing state?
         session = requests.Session()
@@ -310,8 +232,7 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
 
         cur = con.cursor()
         command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
-        print("NetID:",netid)
-        #run and commit query
+        print('Executing:',command)
         cur.execute(command)
         con.commit()
 
@@ -321,9 +242,60 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
     except:
         pass
 
-#TODO
 def getCookies():
-    print('Authenticating with Duo for 24 hours and saving cookies, also returning a list of cookies')
+    print("Getting 24 hour cookies...")
+    exe = os.path.exists(PATH)
+
+    if exe:
+        option = webdriver.ChromeOptions()
+
+        #don't open chrome window
+        option.add_argument('headless')
+        driver = webdriver.Chrome(options = option)
+        
+        driver.get("https://my.msstate.edu/")
+
+        elem = driver.find_element(By.ID,USERNAME_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_NAME)
+
+        elem = driver.find_element(By.ID, PASSWORD_ID)
+        elem.clear()
+        elem.send_keys(INJECTION_PASSWORD)
+
+        driver.find_element(By.NAME,'submit').click()
+
+        #Wait for Duo to load
+        masterDuoID = "login"
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, masterDuoID)))
+        print(f"DUO {masterDuoID} loaded")
+
+        #switch to duo iFrame, this took me like 3 hours to figure out kek
+        iFrameTitle = "duo_iframe"
+        driver.switch_to.frame(iFrameTitle)
+
+        #click remember me for 24 hours
+        twentyFourHours = "dampen_choice"
+        WebDriverWait(driver, PUSH_TIMEOUT).until(
+            EC.presence_of_element_located((By.NAME, twentyFourHours))).click()
+
+        #wait for push button to load and click it
+        pushButtontext = "Send Me a Push"
+        WebDriverWait(driver, PUSH_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
+        print("Push sent")
+
+        #wait for directory to load to confirm we're authenticated
+        directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
+        WebDriverWait(driver, 40).until(
+            EC.presence_of_element_located((By.ID, directoryID)))
+        print("Authentication complete")
+        
+        #copy over cookies from duo authentication
+        yummyCookies = driver.get_cookies()
+
+        return yummyCookies
 
 if __name__ == "__main__":
     apiMain()
