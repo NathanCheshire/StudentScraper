@@ -124,14 +124,6 @@ select count(*)
 from students
 where homestate = 'LA';
 
---by state visualiztion work
-select count(distinct homestate)
-from students;
-
-select count(*) 
-from students 
-where homestate = 'DC';
-
 --leave this space
 
 

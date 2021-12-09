@@ -226,4 +226,6 @@ if __name__ == '__main__':
     #generateStaticImageFromNetid('', save = True)
 
     #removing MS did not help that much, think of a better method, maybe a wider color range
-    generateStateMap()
+    #generateStateMap()
+
+    generateStaticImageFromNetid('wvb26', True)

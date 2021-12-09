@@ -16,3 +16,23 @@ Directly accessing the backend and sending post requests to acquire data is a mu
 # Student Queries
 
 Assuming you have created a Posgres database on your local machine with the same schema I outlined in inside of `Poster.py` you should have success executing any of the queries inside of `StudentQueries.sql`. This is mostly a scratch pad, however.
+
+# Data/
+
+Data holds the csvs I generate `from MapGenerator.py` which are subsequently utilized for a USA state-by-state html output depicting the percentage of students from each of the 50 states. This is possible via the Folium framework in Python.
+
+# MapQuestionAPI
+
+This script is what I used to query the MapQuest api and convert all of the student addresses within my postgres local db to lat,lon pairs. Resultingly, this opens a plethora of possible data visualizations. Both the home address and office address for each valid user was converted to lat, lon pairs which are stored in their respective tables: home_addresses, office_addresses. This schemas include the netid as the PK, as well as a double for both the lat and lon.
+
+# MapGenerator
+
+This is the main data visualization script file. It contains methods such as getting an aerial view of a student's home based soley on their netid, producing a heat map of all students at MSU, and even state by state visualizations for statitistics such as enrollment by state.
+
+# Example
+
+By calling `generateStaticImageFromNetid()` and passing in a netid such as `wvb26`, I can easily produce the following figure within seconds. I find this an exceptionally cool party trick (if you're into parties and all that).
+
+## Figure 1 - Aerial Address Generation soley from netid
+
+<img src="https://i.imgur.com/mS6MiE7.png" data-canonical-src="https://i.imgur.com/mS6MiE7.png"/>
