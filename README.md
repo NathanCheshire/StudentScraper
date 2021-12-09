@@ -11,15 +11,15 @@ This method will simply search through all permutations of first,last containing
 
 ## Method 2: POST requests
 
-Directly accessing the backend and sending post requests to acquire data is a much faster and more efficient solution. By making a request in Chrome, one can press f12 and go to the networks tab to see any requests recently made. You can then take the request URL and POST data (formData) in this case, and write a script to send POST requests and parse the returned data. First, method 2 starts a selenium instance and authenticates itself. The cookies generated via this authentication are then copied over to the python requests object (it isn't necessary to send them with every POST). Method 2 also inserts all parsed student data into a postgres backend for easy storage/access. Data visualizations with the collected student data are soon to come.
+Directly accessing the backend and sending post requests to acquire data is a much faster and more efficient solution. By making a request in Chrome, one can press f12 and go to the networks tab to see any requests recently made. You can then take the request URL and POST data (formData) in this case, and write a script to send POST requests and parse the returned data. First, method 2 starts a selenium instance and authenticates itself. The cookies generated via this authentication are then copied over to the python requests object (it isn't necessary to send them with every POST). Method 2 also inserts all parsed student data into a postgres backend for easy storage/access. Data visualizations with the collected student data can be seen below as well as in `MapGenerator.py`.
 
 # Student Queries
 
-Assuming you have created a Posgres database on your local machine with the same schema I outlined in inside of `Poster.py` you should have success executing any of the queries inside of `StudentQueries.sql`. This is mostly a scratch pad, however.
+Assuming you have created a Posgres database on your local machine with the same schema I outlined inside of `Poster.py` you should have success executing any of the queries inside of `StudentQueries.sql`. This is mostly a scratch pad for me, however, for testing and debugging purposes.
 
 # Data/
 
-Data holds the csvs I generate `from MapGenerator.py` which are subsequently utilized for a USA state-by-state html output depicting the percentage of students from each of the 50 states. This is possible via the Folium framework in Python.
+Data holds the CSVs I generated from `MapGenerator.py` which are subsequently utilized for a USA state-by-state HTML Folium output depicting the percentage of students from each of the 50 states.
 
 # MapQuestionAPI
 
@@ -27,7 +27,7 @@ This script is what I used to query the MapQuest api and convert all of the stud
 
 # MapGenerator
 
-This is the main data visualization script file. It contains methods such as getting an aerial view of a student's home based soley on their netid, producing a heat map of all students at MSU, and even state by state visualizations for statitistics such as enrollment by state.
+This is the main data visualization script file. It contains methods such as getting an aerial view of a student's home based soley on their netid, producing a heat map of all students at MSU, and even state by state visualizations for statitistics such as enrollment by state (as one would expect it's extremely biased towards MS since as of 12-8-21, 71.73% of students at MSU have a home address within Mississippi. This stat can be seen in `Data/StudentsByStateNormalized.csv`).
 
 # Example
 
