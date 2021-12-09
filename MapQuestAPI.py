@@ -1,10 +1,9 @@
 import psycopg2
-import pandas as pd
 import requests
 import json
 
-def main(startFrom = 0):
-    print('Beginning visualizations...')
+def insertAddresses(startFrom = 0):
+    print('Beginning insertions')
 
     con = psycopg2.connect(
             host = "cypherlenovo", 
@@ -16,14 +15,14 @@ def main(startFrom = 0):
 
     cur = con.cursor()
 
-    command = '''SELECT netid, officestreet, officecity, officestate, officezip, officecountry 
+    command = '''SELECT netid, homestreet, homecity, homestate, homezip, homecountry 
                 from students
-                where officestreet != 'NULL'
-                and netid in (select netid from students where homestreet != officestreet);'''
+                where homestreet != 'NULL'
+                and netid not in (select netid from home_addresses);'''
     
     cur.execute(command)
-    officeAddresses = cur.fetchall()
-    print("Found",len(officeAddresses),"office addresses that are not null")
+    homeAddresses = cur.fetchall()
+    print("Found",len(homeAddresses),"home addresses that are not null nor in home_addresses")
 
     #avoid memory leaks
     cur.close()
@@ -31,19 +30,20 @@ def main(startFrom = 0):
 
     key = open("geokey.key").read()
 
-    for officeAddressInd in range(len(officeAddresses)):
-        if officeAddressInd < startFrom:
+    for homeAddressInd in range(len(homeAddresses)):
+        if homeAddressInd < startFrom:
             continue
 
-        officeAddress = officeAddresses[officeAddressInd]
-        netid = officeAddress[0]
-        print('On netid:',netid,officeAddressInd + 1,'/',len(officeAddresses))
+        homeAddress = homeAddresses[homeAddressInd]
+        netid = homeAddress[0]
+        print('On netid:',netid,homeAddressInd + 1,'/',len(homeAddresses))
 
         #continue if netid already in table since we don't want to make a geo request
-        if '(\'' + netid + '\',)' in str(getNetIDs('office_addresses')):
+        if '(\'' + netid + '\',)' in str(getNetIDs('home_addresses')):
             continue
        
-        addressString = officeAddress[1] + "," + officeAddress[2] + "," + officeAddress[3] + "," + officeAddress[4] + "," + officeAddress[5]
+        addressString = (homeAddress[1] + "," + homeAddress[2] + "," 
+                        + homeAddress[3] + "," + homeAddress[4] + "," + homeAddress[5])
     
         #strip nulls out
         addressString = addressString.replace('NULL','')
@@ -54,7 +54,7 @@ def main(startFrom = 0):
         lat = data['results'][0]['locations'][0]['latLng']['lat']
         lng = data['results'][0]['locations'][0]['latLng']['lng']
 
-        insertAddress(netid, "office_addresses", lat, lng)
+        insertAddress(netid, "home_addresses", lat, lng)
 
 def getNetIDs(tablename = 'students'):
     con = psycopg2.connect(
@@ -107,4 +107,4 @@ def getResponse(params):
     return requests.get('http://www.mapquestapi.com/geocoding/v1/address', params = params)
 
 if __name__ == "__main__":
-    main(startFrom = 0)
+    insertAddresses(startFrom = 0)
