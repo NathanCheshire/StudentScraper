@@ -200,7 +200,7 @@ def generateStateMap():
     )
     state_geo = f"{url}/us-states.json"
 
-    state_data = pd.read_csv('Data/StudentsByStateNormalized.csv')
+    state_data = pd.read_csv('Data/StudentsByStateNoMS.csv')
 
     folium.Choropleth(
         geo_data = state_geo,
@@ -215,7 +215,7 @@ def generateStateMap():
     ).add_to(stateMap)
 
     folium.LayerControl().add_to(stateMap)
-    stateMap.save('Maps/StudentsByStateNormalized.html')
+    stateMap.save('Maps/StudentsByStateNoMS.html')
 
 if __name__ == '__main__':
     #createUsaHeatmap()
@@ -225,4 +225,5 @@ if __name__ == '__main__':
 
     #generateStaticImageFromNetid('', save = True)
 
+    #removing MS did not help that much, think of a better method, maybe a wider color range
     generateStateMap()
