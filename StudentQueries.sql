@@ -107,8 +107,16 @@ from home_addresses;
 select *
 from office_addresses;
 
---this should be the num in the office_addresses table after script is done
-select count(*) from students where officestreet != 'NULL';
+--number of valid addresses that don't exist in the address table
+select count(*) 
+from students
+where homestreet != 'NULL' and netid not in 
+(select netid from home_addresses);
+
+select *
+from students
+where homestreet != 'NULL' and netid not in 
+(select netid from home_addresses);
 
 --join tables
 select * 

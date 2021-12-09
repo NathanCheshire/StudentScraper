@@ -59,7 +59,7 @@ def totalAccessibleStudentRecords():
 
 #webscraping method directly using the backend API provided user is authenticated
 def apiMain(startVowel = 'a', startPage = '0'):
-    print("Begining post sequence")
+    print("Begining post sequence...")
     exe = os.path.exists(PATH)
 
     if exe:
@@ -208,6 +208,9 @@ def parsePost(text):
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
+        #TODO optimize this to not even call this function
+        # if netid is in the table
+
         insertPG(netid, email, first, last, picturePublic, picturePrivate, major,class_, homePhone,officePhone,
                 pidm, selected, isStudent, isAffiliate, isRetired, homeStreet, homeCity, homeState, homeZip, homeCountry,
                 officeStreet, officeCity, officeState, officeZip, officeCountry)   
@@ -232,7 +235,6 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
 
         cur = con.cursor()
         command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
-        print('Executing:',command)
         cur.execute(command)
         con.commit()
 
