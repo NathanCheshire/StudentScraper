@@ -108,7 +108,7 @@ select count(*)
 from office_addresses;
 
 --this should be the num in the office_addresses table after script is done
-select count(*) from students where officestreet != 'NULL'
+select count(*) from students where officestreet != 'NULL';
 
 --join tables
 select * 
@@ -123,6 +123,14 @@ where homestate = 'MS';
 select count(*)
 from students
 where homestate = 'LA';
+
+--by state visualiztion work
+select count(distinct homestate)
+from students;
+
+select count(*) 
+from students 
+where homestate = 'DC';
 
 --leave this space
 
