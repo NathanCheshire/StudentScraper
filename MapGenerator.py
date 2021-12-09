@@ -228,4 +228,4 @@ if __name__ == '__main__':
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
 
-    generateStaticImageFromNetid('wvb26', True)
+    generateStaticImageFromNetid('rsz12', True)

@@ -104,7 +104,7 @@ select count(*)
 from home_addresses;
 
 --office addresses
-select count(*) 
+select *
 from office_addresses;
 
 --this should be the num in the office_addresses table after script is done
@@ -123,6 +123,9 @@ where homestate = 'MS';
 select count(*)
 from students
 where homestate = 'LA';
+
+--doxing Rakeen
+select netid from students where firstname = 'Rakeen';
 
 --leave this space
 
