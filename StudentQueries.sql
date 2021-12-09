@@ -73,14 +73,13 @@ select netid, firstname, lastname, major, class
 from students
 where major = 'Mechanical Engineering';
 
---occurneces of netid numbers
+--occurences of netid numbers
 select count(*) as occurences, netidnum
 from students
 group by netidnum
 order by netidnum asc;
 
 --the best TA
-
 select * 
 from students
 where class = 'Graduate' and firstname = 'Jesse';
@@ -95,10 +94,6 @@ order by class;
 select * from students 
 where homestreet like '%College View%' or officestreet like '%College View%';
 
---transactions
-begin;
-commit;
-
 --home addresses
 select count(*) 
 from home_addresses;
@@ -112,6 +107,11 @@ select count(*)
 from students
 where homestreet != 'NULL' and netid not in 
 (select netid from home_addresses);
+
+select count(*)
+from students
+where officestreet != 'NULL' and netid not in
+(select netid from office_addresses);
 
 select *
 from students
@@ -132,9 +132,30 @@ select count(*)
 from students
 where homestate = 'LA';
 
---doxing Rakeen
+--doxing Rakeen lol
 select netid from students where firstname = 'Rakeen';
 
---leave this space
+--records that still have to be added to office addresses
+select count(*)
+from students
+where officestreet != 'NULL' 
+and netid not in (select netid from office_addresses);
+
+select count(*)
+from office_addresses
+
+--copy addresses from home to office if not in office and the addys are equal
+--since no need to recaluate lat/lon pairs
+insert into office_addresses
+select netid, lat, lon
+from home_addresses
+where home_addresses.netid not in (select netid from office_addresses)
+and netid in (select netid from students where homestreet = officestreet)
+
+--transactions
+begin;
+rollback;
+commit;
+
 
 
