@@ -1,4 +1,4 @@
-from os import stat
+import networkx as nx
 from PIL import Image
 import requests
 import pandas as pd
@@ -217,6 +217,56 @@ def generateStateMap():
     folium.LayerControl().add_to(stateMap)
     stateMap.save('Maps/StudentsByStateNoMS.html')
 
+def pathFromNetidToNetid(netid1, netid2):
+    print('Generating path from',netid1,"to",netid2,"...")
+    #https://stackoverflow.com/questions/60578408/is-it-possible-to-draw-paths-in-folium
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students",
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
+                              students.netid, students.firstname, students.lastname,
+                              students.homecity, students.homestate
+                              from home_addresses
+                              inner join students on home_addresses.netid = students.netid
+                              where students.netid in (\'''' + netid1 + "\',\'" + netid2 + "\');", con)
+
+    m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
+    arr = df.values
+
+    latIndex = 0
+    lonIndex = 1
+    netidIndex = 2
+    firstnameIndex = 3
+    lastnameIndex = 4
+    cityIndex = 5
+    stateIndex = 6
+
+    #add ways points to map
+    for i in range(0, len(arr)):
+        lat = arr[i][latIndex]
+        lon = arr[i][lonIndex]
+        netid = arr[i][netidIndex]
+        firstname = arr[i][firstnameIndex]
+        lastname = arr[i][lastnameIndex]
+        city = arr[i][cityIndex]
+        state = arr[i][stateIndex]
+
+        folium.Marker(
+            location=[lat, lon],
+            popup = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
+            icon = folium.Icon(color='darkred')
+        ).add_to(m)
+
+    saveName = 'Maps/StudentPathMap_' + str(netid1) + "_To_" + str(netid2) + '_Waypoints.html'
+    m.save(saveName)
+    print('Map Generated and saved as',saveName)
+
 if __name__ == '__main__':
     #createUsaHeatmap()
 
@@ -228,4 +278,6 @@ if __name__ == '__main__':
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
 
-    generateStaticImageFromNetid('rsz12', True)
+    #generateStaticImageFromNetid('rsz12', True)
+
+    pathFromNetidToNetid('nvc29','mnd199')
