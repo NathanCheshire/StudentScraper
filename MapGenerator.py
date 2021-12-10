@@ -278,6 +278,8 @@ if __name__ == '__main__':
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
 
-    #generateStaticImageFromNetid('rsz12', True)
+    #generateStaticImageFromNetid('mdg476', True)
+
+    #TODO, post heat map and student way points without names
 
     pathFromNetidToNetid('nvc29','mnd199')
