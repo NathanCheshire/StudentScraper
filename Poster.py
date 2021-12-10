@@ -33,32 +33,8 @@ QUERRY_SLEEP_TIMEOUT = 1
 
 vowels = ['a','e','i','o','u','y']
 
-#outputs how many student records you should have in pg
-def totalAccessibleStudentRecords():
-    if os.path.exists(PATH):
-        #copy over cookies from duo authentication
-        yummyCookies = getCookies()
-
-        #the fact that cookies don't timeout is insane like what are you doing state?
-        session = requests.Session()
-        for cookie in yummyCookies:
-            session.cookies.set(cookie['name'], cookie['value'])
-
-        recordSum = 0
-                
-        for vowelIndex in range(len(vowels)):
-            #get the number of records there are with this search to construct our loops accordingly
-            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29','s')
-            totalResultsRet = post(session, formData)
-
-            print('Attempting to parse for page number:',totalResultsRet)
-            totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
-            recordSum = recordSum + totalResults
-
-        print("Total accessible student records:", recordSum)
-
 #webscraping method directly using the backend API provided user is authenticated
-def apiMain(startVowel = 'a', startPage = '0'):
+def apiMain(startVowel = 'a', startPage = '0', studentMode = True):
     print("Begining post sequence...")
     exe = os.path.exists(PATH)
 
@@ -78,8 +54,10 @@ def apiMain(startVowel = 'a', startPage = '0'):
             if vowelIndex < vowels.index(startVowel):
                 continue
 
+            personType = 's' if studentMode else 'f'
+
             #get the number of records there are with this search to construct our loops accordingly
-            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29','s')
+            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29', personType)
             totalResultsRet = post(session, formData)
 
             print('Attempting to parse for page number:',totalResultsRet)
@@ -97,7 +75,7 @@ def apiMain(startVowel = 'a', startPage = '0'):
                     continue
 
                 print("Page",page,"of",pages,"for last contains", vowels[vowelIndex])
-                parsePost(post(session, constructFormString(vowels[vowelIndex], str(page), 'nvc29','s')))
+                parsePost(post(session, constructFormString(vowels[vowelIndex], str(page), 'nvc29', personType)), personType)
 
                 #reasonable timeout
                 time.sleep(0.25)
@@ -141,7 +119,7 @@ ADDRESS_COUNTRY_TAG = 'country'
 
 ###########################################################
 
-def parsePost(text):
+def parsePost(text, personType):
     #create soup of text
     soup = BeautifulSoup(text, 'html.parser')
     #get all person tags to sub parse for information
@@ -211,17 +189,17 @@ def parsePost(text):
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
-        #TODO optimize this to not even call this function
-        # if netid is in the table
+        tableName = 'students' if personType == 's' else 'faculty'
 
         insertPG(netid, email, first, last, picturePublic, picturePrivate, major,class_, homePhone,officePhone,
                 pidm, selected, isStudent, isAffiliate, isRetired, homeStreet, homeCity, homeState, homeZip, homeCountry,
-                officeStreet, officeCity, officeState, officeZip, officeCountry)   
+                officeStreet, officeCity, officeState, officeZip, officeCountry, table = tableName)
+            
 
 def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
                 homePhone = "NULL",officePhone = "NULL",pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
                 homeStreet = "NULL",homeCity = "NULL",homeState = "NULL",homeZip = "NULL",homeCountry = "NULL",
-                officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL"):
+                officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL", table = 'students'):
 
     #try catch since duplicates will be skipped
     try:
@@ -237,7 +215,7 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
             local = local.replace("'","\'").replace('"','\"')
 
         cur = con.cursor()
-        command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
+        command = "INSERT INTO " + table + " (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
         cur.execute(command)
         con.commit()
 
@@ -303,4 +281,4 @@ def getCookies():
         return yummyCookies
 
 if __name__ == "__main__":
-    apiMain()
+    apiMain(studentMode = True)
