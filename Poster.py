@@ -33,7 +33,7 @@ QUERRY_SLEEP_TIMEOUT = 1
 
 vowels = ['a','e','i','o','u','y']
 
-#outputs how many student records you should have in pg after running either method
+#outputs how many student records you should have in pg
 def totalAccessibleStudentRecords():
     if os.path.exists(PATH):
         #copy over cookies from duo authentication
@@ -48,7 +48,7 @@ def totalAccessibleStudentRecords():
                 
         for vowelIndex in range(len(vowels)):
             #get the number of records there are with this search to construct our loops accordingly
-            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29')
+            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29','s')
             totalResultsRet = post(session, formData)
 
             print('Attempting to parse for page number:',totalResultsRet)
@@ -79,7 +79,7 @@ def apiMain(startVowel = 'a', startPage = '0'):
                 continue
 
             #get the number of records there are with this search to construct our loops accordingly
-            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29')
+            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29','s')
             totalResultsRet = post(session, formData)
 
             print('Attempting to parse for page number:',totalResultsRet)
@@ -97,7 +97,7 @@ def apiMain(startVowel = 'a', startPage = '0'):
                     continue
 
                 print("Page",page,"of",pages,"for last contains", vowels[vowelIndex])
-                parsePost(post(session, constructFormString(vowels[vowelIndex], str(page), 'nvc29')))
+                parsePost(post(session, constructFormString(vowels[vowelIndex], str(page), 'nvc29','s')))
 
                 #reasonable timeout
                 time.sleep(0.25)
@@ -107,8 +107,11 @@ def apiMain(startVowel = 'a', startPage = '0'):
     else:
         print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
 
-def constructFormString(lnameContains, page, netid):
-    return '{"searchType":"Advanced","netid":"' + netid + '","field1":"lname","oper1":"contain","value1":"' + lnameContains + '","field2":"fname","oper2":"contain","value2":"' + "" + '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"s"}'
+def constructFormString(lnameContains, page, netid, personType = 's'):
+    return ('{"searchType":"Advanced","netid":"' + netid + 
+    '","field1":"lname","oper1":"contain","value1":"' + lnameContains +
+    '","field2":"fname","oper2":"contain","value2":"' + "" +
+    '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"' + personType + '"}')
 
 def getPostString():
     return 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
