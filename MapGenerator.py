@@ -1,4 +1,3 @@
-import networkx as nx
 from PIL import Image
 import requests
 import pandas as pd
@@ -28,9 +27,13 @@ def generateStaticImage(lat, lon, width, height, save = False):
 
     im = Image.open(requests.get(baseString, stream=True).raw)
     im.show()
-    im.save('Figures/' + str(lat) + "-" + str(lon) + ".png")
 
-def generateStaticImageFromNetid(netid, save = False):
+    if save:
+        saveName = 'Figures/' + str(lat) + "-" + str(lon) + ".png"
+        im.save(saveName)
+        print('Image saved as:',saveName)
+
+def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 1000):
     con = psycopg2.connect(
         host = "cypherlenovo",
         database = "msu_students",
@@ -44,7 +47,7 @@ def generateStaticImageFromNetid(netid, save = False):
     lat = arr[0][0]
     lon = arr[0][1]
 
-    generateStaticImage(lat, lon, 1000, 1000, save)
+    generateStaticImage(lat, lon, width, height, save)
 
 def createUsaHeatmap():
     print('Generating heatmap based on home addresses')
@@ -247,7 +250,7 @@ def pathFromNetidToNetid(netid1, netid2):
     cityIndex = 5
     stateIndex = 6
 
-    #add ways points to map
+    #add red waypoints to map
     for i in range(0, len(arr)):
         lat = arr[i][latIndex]
         lon = arr[i][lonIndex]
@@ -263,7 +266,9 @@ def pathFromNetidToNetid(netid1, netid2):
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
-    saveName = 'Maps/StudentPathMap_' + str(netid1) + "_To_" + str(netid2) + '_Waypoints.html'
+    #use osmnx to draw a street path from waypoint to waypoint
+
+    saveName = 'Maps/StudentPathMap_' + str(netid1) + "_To_" + str(netid2) + '.html'
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
@@ -273,8 +278,6 @@ if __name__ == '__main__':
     #todo this method can't handle all the addresses, find a better way to show waypoints
     #createWorldLabeledMap(waypoints = 500)
 
-    #generateStaticImageFromNetid('', save = True)
-
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
 
@@ -282,4 +285,4 @@ if __name__ == '__main__':
 
     #TODO, post heat map and student way points without names
 
-    pathFromNetidToNetid('nvc29','mnd199')
+    pathFromNetidToNetid('nvc29','sjb578')

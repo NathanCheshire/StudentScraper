@@ -153,9 +153,8 @@ where home_addresses.netid not in (select netid from office_addresses)
 and netid in (select netid from students where homestreet = officestreet)
 
 --faculty stuff
-
-select * from faculty;
-select count(*) from faculty;
+select * from faculty where firstname = 'William' and lastname = 'Tschume'
+select count(*) from faculty
 
 --transactions
 begin;
