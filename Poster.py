@@ -120,6 +120,12 @@ ADDRESS_COUNTRY_TAG = 'country'
 ###########################################################
 
 def parsePost(text, personType):
+    if personType == 's':
+        parsePostStudent(text)
+    elif personType == 'f':
+        parsePostFaculty(text)
+
+def parsePostStudent(text):
     #create soup of text
     soup = BeautifulSoup(text, 'html.parser')
     #get all person tags to sub parse for information
@@ -191,17 +197,19 @@ def parsePost(text, personType):
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
-        tableName = 'students' if personType == 's' else 'faculty'
-
-        insertPG(netid, email, first, last, picturePublic, picturePrivate, major,class_, homePhone,officePhone,
+        insertPGStudents(netid, email, first, last, picturePublic, picturePrivate, major,class_, homePhone,officePhone,
                 pidm, selected, isStudent, isAffiliate, isRetired, homeStreet, homeCity, homeState, homeZip, homeCountry,
-                officeStreet, officeCity, officeState, officeZip, officeCountry, table = tableName)
-            
+                officeStreet, officeCity, officeState, officeZip, officeCountry)
 
-def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
+def parsePostFaculty(text):
+    print('TODO parse out based on information you can gather from faculty/staff')
+    #<directory.person><count>1</count><person netid="wjt37" pidm="20994969" selected="no" student="no" affiliate="no" retired="no"><picturepublic>true</picturepublic><pictureprivate>true</pictureprivate><name><preferred>Jacob</preferred><lastname>Tschume</lastname><firstname>William</firstname></name><adr type="office"><street1>Mailstop 9715</street1><street2>410 Allen Hall</street2></adr><tel type="office"><phone>6623257176</phone></tel><email>jtschume@math.msstate.edu</email><roles><employee><orgn>Mathematics &amp; Statistics</orgn><title>Instructor</title></employee></roles></person></directory.person>
+            
+#inserts into the students table with the proper schema data
+def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
                 homePhone = 0,officePhone = 0, pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
                 homeStreet = "NULL",homeCity = "NULL",homeState = "NULL",homeZip = "NULL",homeCountry = "NULL",
-                officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL", table = 'students'):
+                officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL"):
 
     #try catch since duplicates will be skipped
     try:
@@ -217,7 +225,7 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
             local = local.replace("'","\'").replace('"','\"')
 
         cur = con.cursor()
-        command = "INSERT INTO " + table + " (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
+        command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
         print('Executing',command)
         cur.execute(command)
         con.commit()
@@ -228,6 +236,9 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
     except Exception as e:
         print(e)
         pass
+
+def insertPGFaculty():
+    print('TODO accept proper params for schema with default values except for PK')
 
 def getCookies():
     print("Getting 24 hour cookies...")
