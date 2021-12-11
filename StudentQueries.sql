@@ -152,6 +152,11 @@ from home_addresses
 where home_addresses.netid not in (select netid from office_addresses)
 and netid in (select netid from students where homestreet = officestreet)
 
+--faculty stuff
+
+select * from faculty;
+select count(*) from faculty;
+
 --transactions
 begin;
 rollback;

@@ -143,14 +143,16 @@ def parsePost(text, personType):
             class_ = re.compile(r'<.*?>').sub('', str(studentTags.find(CLASS_TAG)))
 
         numbers = personSoup.find_all('tel')
-        homePhone = "NULL"
-        officePhone = "NULL"
+        homePhone = 0
+        officePhone = 0
         
         for number in numbers:
             if "permanent" in str(number):
                 homePhone = re.compile(r'<.*?>').sub('', str(number))
             elif "office" in str(number):
                 officePhone = re.compile(r'<.*?>').sub('', str(number))
+            else: #this is for faculty since their number is just listed as "Phone"
+                homePhone = re.compile(r'<.*?>').sub('', str(number))
 
         addresses = personSoup.find_all('adr')
 
@@ -197,7 +199,7 @@ def parsePost(text, personType):
             
 
 def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
-                homePhone = "NULL",officePhone = "NULL",pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
+                homePhone = 0,officePhone = 0, pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
                 homeStreet = "NULL",homeCity = "NULL",homeState = "NULL",homeZip = "NULL",homeCountry = "NULL",
                 officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL", table = 'students'):
 
@@ -216,13 +218,15 @@ def insertPG(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = 
 
         cur = con.cursor()
         command = "INSERT INTO " + table + " (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
+        print('Executing',command)
         cur.execute(command)
         con.commit()
 
         #avoid memory leaks
         cur.close()
         con.close()
-    except:
+    except Exception as e:
+        print(e)
         pass
 
 def getCookies():
@@ -281,4 +285,4 @@ def getCookies():
         return yummyCookies
 
 if __name__ == "__main__":
-    apiMain(studentMode = True)
+    apiMain(studentMode = False)
