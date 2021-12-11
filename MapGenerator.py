@@ -222,7 +222,6 @@ def generateStateMap():
 
 def pathFromNetidToNetid(netid1, netid2):
     print('Generating path from',netid1,"to",netid2,"...")
-    #https://stackoverflow.com/questions/60578408/is-it-possible-to-draw-paths-in-folium
 
     con = psycopg2.connect(
         host = "cypherlenovo",
@@ -250,6 +249,8 @@ def pathFromNetidToNetid(netid1, netid2):
     cityIndex = 5
     stateIndex = 6
 
+    coordinates = []
+
     #add red waypoints to map
     for i in range(0, len(arr)):
         lat = arr[i][latIndex]
@@ -260,17 +261,24 @@ def pathFromNetidToNetid(netid1, netid2):
         city = arr[i][cityIndex]
         state = arr[i][stateIndex]
 
+        coordinates.append([lat, lon])
+
         folium.Marker(
             location=[lat, lon],
             popup = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
+            tooltip = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
-    #use osmnx to draw a street path from waypoint to waypoint
+    #client = openrouteservice.Client(key = open("mapkey.key").read())
+    #route = client.directions(coordinates = coordinates, profile = 'driving-car', format = 'geojson')
+    #folium.GeoJson(route, name = ('Path from ' + str(netid1) + " to " + str(netid2))).add_to(m)
 
     saveName = 'Maps/StudentPathMap_' + str(netid1) + "_To_" + str(netid2) + '.html'
     m.save(saveName)
     print('Map Generated and saved as',saveName)
+
+import openrouteservice as ors
 
 if __name__ == '__main__':
     #createUsaHeatmap()
@@ -284,5 +292,65 @@ if __name__ == '__main__':
     #generateStaticImageFromNetid('mdg476', True)
 
     #TODO, post heat map and student way points without names
+    ors.Client(key = open("mapkey.key").read())
+    #pathFromNetidToNetid('nvc29','sjb578')
 
-    pathFromNetidToNetid('nvc29','sjb578')
+    netid1 = 'nvc29'
+    netid2 = 'sjb578'
+    print('Generating path from',netid1,"to",netid2,"...")
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students",
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
+                              students.netid, students.firstname, students.lastname,
+                              students.homecity, students.homestate
+                              from home_addresses
+                              inner join students on home_addresses.netid = students.netid
+                              where students.netid in (\'''' + netid1 + "\',\'" + netid2 + "\');", con)
+
+    m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
+    arr = df.values
+
+    latIndex = 0
+    lonIndex = 1
+    netidIndex = 2
+    firstnameIndex = 3
+    lastnameIndex = 4
+    cityIndex = 5
+    stateIndex = 6
+
+    coordinates = [] #[-86.781247,36.163532],[-80.191850,25.77164] works
+
+    #add red waypoints to map
+    for i in range(0, len(arr)):
+        lat = arr[i][latIndex]
+        lon = arr[i][lonIndex]
+        netid = arr[i][netidIndex]
+        firstname = arr[i][firstnameIndex]
+        lastname = arr[i][lastnameIndex]
+        city = arr[i][cityIndex]
+        state = arr[i][stateIndex]
+
+        coordinates.append([float(lon), float(lat)])
+
+        folium.Marker(
+            location=[lat, lon],
+            popup = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
+            tooltip = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
+            icon = folium.Icon(color='darkred')
+        ).add_to(m)
+
+    print(coordinates)
+    client = ors.Client(key = open("mapkey.key").read())
+    route = client.directions(coordinates = coordinates, profile = 'driving-car', format = 'geojson')
+    folium.GeoJson(route, name = ('Path from ' + str(netid1) + " to " + str(netid2))).add_to(m)
+
+    saveName = 'Maps/StudentPathMap_' + str(netid1) + "_To_" + str(netid2) + '.html'
+    m.save(saveName)
+    print('Map Generated and saved as',saveName)
