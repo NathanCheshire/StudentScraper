@@ -192,6 +192,8 @@ def checkStateAbreviations():
 def validateStateAbreviation(abrev):
     if abrev.upper() not in states:
         print(abrev,"is not a valid state abreviation")
+        return False
+    else: return True
 
 def validateStateAbr(abrev):
     return abrev in states and abrev != 'DC'
@@ -288,9 +290,9 @@ if __name__ == '__main__':
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
 
-    #generateStaticImageFromNetid('mdg476', True)
+    #generateStaticImageFromNetid('mdg476', save = True)
 
-    #TODO, post heat map and student way points without names
+    #todo react from end to navigate between semeesters and then between maps
 
     #TODO tooltips should be what it is now, and clicking should show actual address    
 
