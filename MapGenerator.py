@@ -310,5 +310,6 @@ if __name__ == '__main__':
     #generateStateMap()
 
     #TODO react from end to navigate between semeesters and then between maps
+    #TODO waypoints should have a link to googlemaps to how to get there from current location
 
     #pathFromNetidToNetid('nvc29','mnd199')

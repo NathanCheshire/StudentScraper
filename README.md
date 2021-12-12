@@ -36,3 +36,9 @@ By calling `generateStaticImageFromNetid()` and passing in a netid such as `wvb2
 ## Figure 1 - Aerial Address Generation soley from netid
 
 <img src="https://i.imgur.com/mS6MiE7.png" data-canonical-src="https://i.imgur.com/mS6MiE7.png"/>
+
+## Example 2
+
+By calling `pathFromNetidToNetid('nvc29','mnd199')` and passing in two netids such as the ones provided, I can just as easily produce the following figure depicting the addresses of the two students as well as a path from point to point navigatable by common roads. These waypoints also include exact student information such as full name, netid, and an html formatted address.
+
+<img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png/>
