@@ -39,6 +39,8 @@ By calling `generateStaticImageFromNetid()` and passing in a netid such as `wvb2
 
 ## Example 2
 
-By calling `pathFromNetidToNetid('nvc29','mnd199')` and passing in two netids such as the ones provided, I can just as easily produce the following figure depicting the addresses of the two students as well as a path from point to point navigatable by common roads. These waypoints also include exact student information such as full name, netid, and an html formatted address.
+By calling `pathFromNetidToNetid()` and passing in two netids, I can just as easily produce the following figure depicting the addresses of the two students as well as a path from point to point navigatable by common roads. These waypoints also include exact student information such as full name, netid, and an html formatted address.
 
-<img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png/>
+## Figure 2 - Route from netid to netid
+
+<img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png"/>
