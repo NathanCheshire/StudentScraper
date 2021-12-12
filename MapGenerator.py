@@ -299,12 +299,25 @@ def pathFromNetidToNetid(netid1, netid2):
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
+def generateGoogleMapsLink(street = '400 S. Monroe St.', city = 'Tallahassee', 
+        state = 'FL', zip = '32399-0001', country = 'United States'):
+    specificQuery = (street.replace(' ', '%20') + '%20' + city.replace(' ', '%20') + '%20' + 
+        state.replace(' ', '%20') + '%20' + zip.replace(' ', '%20') + '%20' + country.replace(' ', '%20'))
+
+    rawQuery = 'https://www.google.com/maps/search/?api=1&query='
+
+    return (rawQuery + specificQuery)
+
+def generateStreetViewImage(lat, lon, width = 1000, height = 1000):
+    print('TODO ;)')
+    #https://developers.google.com/maps/documentation/streetview/overview
+
 if __name__ == '__main__':
     #createUsaHeatmap()
     #generateStaticImageFromNetid('mdg476', save = True)
 
     #todo this method can't handle all the addresses, find a better way to show waypoints
-    createWorldLabeledMap(waypoints = 700)
+    #createWorldLabeledMap(waypoints = 700)
 
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
@@ -313,3 +326,5 @@ if __name__ == '__main__':
     #TODO waypoints should have a link to googlemaps to how to get there from current location
 
     #pathFromNetidToNetid('nvc29','mnd199')
+
+    print(generateGoogleMapsLink())
