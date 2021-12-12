@@ -152,9 +152,17 @@ from home_addresses
 where home_addresses.netid not in (select netid from office_addresses)
 and netid in (select netid from students where homestreet = officestreet)
 
+--todo rename database to someting that represents all data for this semester
+-- since we will be doing this each semester
+
 --faculty stuff
-select * from faculty where firstname = 'William' and lastname = 'Tschume'
-select count(*) from faculty
+--faculty PK: netid
+--faculty attributes: netid, pidm, selected, student, affiliate, retired
+-- picture public, picture private, firstname, lastname, preffered within name
+-- adr elements
+--phone
+--email
+--roles
 
 --transactions
 begin;
