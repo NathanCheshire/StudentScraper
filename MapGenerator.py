@@ -1,3 +1,4 @@
+from typing import MappingView
 import openrouteservice as ors
 from PIL import Image
 import requests
@@ -113,10 +114,20 @@ def createWorldLabeledMap(waypoints = 500):
         zip = arr[i][8]
         country = arr[i][9]
 
+        html = f'''
+        <h1>{firstname} {lastname}, {netid}</h1>
+        <p>
+        {street}<br/>{city}, {state}, {zip}<br/>{country}
+        </p>
+        '''
+        
+        iframe = folium.IFrame(html)
+        popup = folium.Popup(iframe, min_width = 250, max_width = 250)
+
         folium.Marker(
             location=[lat, lon],
-            popup = str(street + ", " + city + ", " + state + ", " + zip + ", " + country),
-            tooltip = str(firstname + " " + lastname + "," + netid + "," + city + " " + state),
+            popup = popup,
+            tooltip = str(firstname + " " + lastname),
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
@@ -263,10 +274,20 @@ def pathFromNetidToNetid(netid1, netid2):
 
         coordinates.append([float(lon), float(lat)])
 
+        html = f'''
+        <h1>{firstname} {lastname}, {netid}</h1>
+        <p>
+        {street}<br/>{city}, {state}, {zip}<br/>{country}
+        </p>
+        '''
+        
+        iframe = folium.IFrame(html)
+        popup = folium.Popup(iframe, min_width = 250, max_width = 250)
+
         folium.Marker(
             location=[lat, lon],
-            popup = str(street + ", " + city + ", " + state + ", " + zip + ", " + country),
-            tooltip = str(firstname + " " + lastname + "," + netid + "," + city + " " + state),
+            popup = popup,
+            tooltip = str(firstname + " " + lastname),
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
@@ -283,11 +304,11 @@ if __name__ == '__main__':
     #generateStaticImageFromNetid('mdg476', save = True)
 
     #todo this method can't handle all the addresses, find a better way to show waypoints
-    createWorldLabeledMap(waypoints = 500)
+    createWorldLabeledMap(waypoints = 700)
 
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
 
     #TODO react from end to navigate between semeesters and then between maps
 
-    pathFromNetidToNetid('nvc29','mnd199')
+    #pathFromNetidToNetid('nvc29','mnd199')
