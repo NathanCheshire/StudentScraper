@@ -203,6 +203,7 @@ def parsePostStudent(text):
 
 def parsePostFaculty(text):
     print('TODO parse out based on information you can gather from faculty/staff')
+    print(text)
     #<directory.person><count>1</count><person netid="wjt37" pidm="20994969" selected="no" student="no" affiliate="no" retired="no"><picturepublic>true</picturepublic><pictureprivate>true</pictureprivate><name><preferred>Jacob</preferred><lastname>Tschume</lastname><firstname>William</firstname></name><adr type="office"><street1>Mailstop 9715</street1><street2>410 Allen Hall</street2></adr><tel type="office"><phone>6623257176</phone></tel><email>jtschume@math.msstate.edu</email><roles><employee><orgn>Mathematics &amp; Statistics</orgn><title>Instructor</title></employee></roles></person></directory.person>
             
 #inserts into the students table with the proper schema data

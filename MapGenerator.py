@@ -18,6 +18,7 @@ states = [ 'AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
            'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX',
            'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
 
+#generates a static image based off of a lat/lon input
 def generateStaticImage(lat, lon, width, height, save = False):
     key = open("geokey.key").read()
     
@@ -34,6 +35,7 @@ def generateStaticImage(lat, lon, width, height, save = False):
         im.save(saveName)
         print('Image saved as:',saveName)
 
+#the party trick: generates a static 'google maps' like view of a student's house given their netid
 def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 1000):
     con = psycopg2.connect(
         host = "cypherlenovo",
@@ -50,6 +52,7 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
 
     generateStaticImage(lat, lon, width, height, save)
 
+#the main one: generates a heap map from all lat/lon pairs in our home_addresses table for students
 def createUsaHeatmap():
     print('Generating heatmap based on home addresses')
 
@@ -72,7 +75,8 @@ def createUsaHeatmap():
     m.save("Maps/StudentHeat.html")
 
     print('Heatmap generated and saved as StudentHeat.html')
-    
+
+#generates a folium map with waypoints representing each student
 def createWorldLabeledMap(waypoints = 500):
     print('Generating map with waypoints at addresses with firstname, lastname, and netid')
 
@@ -86,36 +90,33 @@ def createWorldLabeledMap(waypoints = 500):
 
     df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
-                              students.homecity, students.homestate
+                              students.homecity, students.homestate, students.homestreet,
+                              students.homezip, students.homecountry
                               from home_addresses
                               inner join students on home_addresses.netid = students.netid''', con)
 
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
 
-    latIndex = 0
-    lonIndex = 1
-    netidIndex = 2
-    firstnameIndex = 3
-    lastnameIndex = 4
-    cityIndex = 5
-    stateIndex = 6
-
     if waypoints == 0:
         waypoints = len(arr)
 
     for i in range(0, waypoints):
-        lat = arr[i][latIndex]
-        lon = arr[i][lonIndex]
-        netid = arr[i][netidIndex]
-        firstname = arr[i][firstnameIndex]
-        lastname = arr[i][lastnameIndex]
-        city = arr[i][cityIndex]
-        state = arr[i][stateIndex]
+        lat = arr[i][0]
+        lon = arr[i][1]
+        netid = arr[i][2]
+        firstname = arr[i][3]
+        lastname = arr[i][4]
+        city = arr[i][5]
+        state = arr[i][6]
+        street = arr[i][7]
+        zip = arr[i][8]
+        country = arr[i][9]
 
         folium.Marker(
             location=[lat, lon],
-            popup = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
+            popup = str(street + ", " + city + ", " + state + ", " + zip + ", " + country),
+            tooltip = str(firstname + " " + lastname + "," + netid + "," + city + " " + state),
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
@@ -123,6 +124,7 @@ def createWorldLabeledMap(waypoints = 500):
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
+#generates a csv representing the number of students from MSU by state
 def generateStudentByStateCSV():
     print('Generating csv data for students by home state')
 
@@ -170,6 +172,7 @@ def generateStudentByStateCSV():
     
     print('CSV generated')
 
+# checks al the state abreviations within the student table
 def checkStateAbreviations():
     query = '''select distinct homestate 
                from students 
@@ -187,17 +190,13 @@ def checkStateAbreviations():
     arr = df.values
     
     for i in range(len(arr)):
-        validateStateAbreviation(arr[i][0])
-
-def validateStateAbreviation(abrev):
-    if abrev.upper() not in states:
-        print(abrev,"is not a valid state abreviation")
-        return False
-    else: return True
+        if arr[i][0].upper() not in states:
+            print(arr[i][0],"is not a valid state abreviation")
 
 def validateStateAbr(abrev):
     return abrev in states and abrev != 'DC'
 
+#generates a map representing the students of MSU by statae
 def generateStateMap():
     stateMap = folium.Map(location=[40, -95], zoom_start=4)
 
@@ -223,6 +222,8 @@ def generateStateMap():
     folium.LayerControl().add_to(stateMap)
     stateMap.save('Maps/StudentsByStateNoMS.html')
 
+#generates a map using folium and openrouteservice to connect two netid addresses via
+# a driveable route
 def pathFromNetidToNetid(netid1, netid2):
     print('Generating path from',netid1,"to",netid2,"...")
 
@@ -236,7 +237,8 @@ def pathFromNetidToNetid(netid1, netid2):
 
     df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
-                              students.homecity, students.homestate
+                              students.homecity, students.homestate, students.homestreet,
+                              students.homezip, students.homecountry
                               from home_addresses
                               inner join students on home_addresses.netid = students.netid
                               where students.netid in (\'''' + netid1 + "\',\'" + netid2 + "\');", con)
@@ -244,32 +246,27 @@ def pathFromNetidToNetid(netid1, netid2):
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
 
-    latIndex = 0
-    lonIndex = 1
-    netidIndex = 2
-    firstnameIndex = 3
-    lastnameIndex = 4
-    cityIndex = 5
-    stateIndex = 6
-
     coordinates = []
 
     #add red waypoints to map
     for i in range(0, len(arr)):
-        lat = arr[i][latIndex]
-        lon = arr[i][lonIndex]
-        netid = arr[i][netidIndex]
-        firstname = arr[i][firstnameIndex]
-        lastname = arr[i][lastnameIndex]
-        city = arr[i][cityIndex]
-        state = arr[i][stateIndex]
+        lat = arr[i][0]
+        lon = arr[i][1]
+        netid = arr[i][2]
+        firstname = arr[i][3]
+        lastname = arr[i][4]
+        city = arr[i][5]
+        state = arr[i][6]
+        street = arr[i][7]
+        zip = arr[i][8]
+        country = arr[i][9]
 
         coordinates.append([float(lon), float(lat)])
 
         folium.Marker(
             location=[lat, lon],
-            popup = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
-            tooltip = str(firstname + "\n" + lastname + "\n" + netid + "\n" + city + "\n" + state),
+            popup = str(street + ", " + city + ", " + state + ", " + zip + ", " + country),
+            tooltip = str(firstname + " " + lastname + "," + netid + "," + city + " " + state),
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
@@ -283,17 +280,14 @@ def pathFromNetidToNetid(netid1, netid2):
 
 if __name__ == '__main__':
     #createUsaHeatmap()
+    #generateStaticImageFromNetid('mdg476', save = True)
 
     #todo this method can't handle all the addresses, find a better way to show waypoints
-    #createWorldLabeledMap(waypoints = 500)
+    createWorldLabeledMap(waypoints = 500)
 
     #removing MS did not help that much, think of a better method, maybe a wider color range
     #generateStateMap()
 
-    #generateStaticImageFromNetid('mdg476', save = True)
-
-    #todo react from end to navigate between semeesters and then between maps
-
-    #TODO tooltips should be what it is now, and clicking should show actual address    
+    #TODO react from end to navigate between semeesters and then between maps
 
     pathFromNetidToNetid('nvc29','mnd199')
