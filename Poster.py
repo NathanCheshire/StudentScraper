@@ -202,10 +202,84 @@ def parsePostStudent(text):
                 officeStreet, officeCity, officeState, officeZip, officeCountry)
 
 def parsePostFaculty(text):
-    print('TODO parse out based on information you can gather from faculty/staff')
-    print(text)
-    #<directory.person><count>1</count><person netid="wjt37" pidm="20994969" selected="no" student="no" affiliate="no" retired="no"><picturepublic>true</picturepublic><pictureprivate>true</pictureprivate><name><preferred>Jacob</preferred><lastname>Tschume</lastname><firstname>William</firstname></name><adr type="office"><street1>Mailstop 9715</street1><street2>410 Allen Hall</street2></adr><tel type="office"><phone>6623257176</phone></tel><email>jtschume@math.msstate.edu</email><roles><employee><orgn>Mathematics &amp; Statistics</orgn><title>Instructor</title></employee></roles></person></directory.person>
-            
+    soup = BeautifulSoup(text, 'html.parser')
+    #get all person tags to sub parse for information
+    tag = soup.find_all(PERSON_TAG)
+
+    for person in tag:
+        personSoup = BeautifulSoup(str(person),'html.parser')
+
+        stat = personSoup.find_all("person")[0]
+
+        netid = stat['netid']
+        pidm = stat['pidm']
+        selected = stat['selected']
+        isStudent = stat['student']
+        isAffiliate = stat['affiliate']
+        isRetired = stat['retired']
+
+        picturePublic = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPUBLIC_TAG)))
+        picturePrivate = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPRIVATE_TAG)))
+
+        first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG))) 
+        last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG)))
+        prefName = re.compile(r'<.*?>').sub('', str(personSoup.find('preferred')))
+        namePrefix = re.compile(r'<.*?>').sub('', str(personSoup.find('prefix')))
+
+        officePhone = re.compile(r'<.*?>').sub('', str(personSoup.find('tel')))
+
+        #sometimes this is their netid @msstate.edu and sometimes
+        # it's their dep, I guess they choose their pref email
+        email = re.compile(r'<.*?>').sub('', str(personSoup.find('email')))
+
+        roleSoup = BeautifulSoup(str(personSoup.find('roles')), 'html.parser')
+
+        orgn = re.compile(r'<.*?>').sub('', str(roleSoup.find('orgn'))).replace('&amp;',"&")
+        title = re.compile(r'<.*?>').sub('', str(roleSoup.find('title'))).replace('&amp;',"&")
+
+        addressSoup = BeautifulSoup(str(personSoup.find('adr')), 'html.parser') 
+        
+        street1 = re.compile(r'<.*?>').sub('', str(addressSoup.find('street1')))
+        street2 = re.compile(r'<.*?>').sub('', str(addressSoup.find('street2')))
+        city = re.compile(r'<.*?>').sub('', str(addressSoup.find('city'))) 
+        state = re.compile(r'<.*?>').sub('', str(addressSoup.find('state')))
+        zip = re.compile(r'<.*?>').sub('', str(addressSoup.find('zip'))) 
+        country = re.compile(r'<.*?>').sub('', str(addressSoup.find('country')))
+
+        #null checks
+        if first == None:
+            first = "NULL"
+        if last == None:
+            last = "NULL"
+        if prefName == None:
+            prefName = "NULL"
+        if namePrefix == None:
+            namePrefix = "NULL"
+        if officePhone == None:
+            officePhone = "NULL"
+        if email == None:
+            email = "NULL"
+        if orgn == None:
+            orgn = "NULL"
+        if title == None:
+            title = "NULL"
+        if street1 == None:
+            street1 = "NULL"
+        if street2 == None:
+            street2 = "NULL"
+        if city == None:
+            city = "NULL"
+        if state == None:
+            state = "NULL"
+        if zip == None:
+            zip = "NULL"
+        if country == None:
+            country = "NULL"
+
+        insertPGFaculty(netid,pidm,selected,isStudent,isAffiliate,isRetired, picturePublic,
+                picturePrivate,first,last,prefName,namePrefix, officePhone, email, orgn, title,
+                street1,street2,city,state,zip,country)
+
 #inserts into the students table with the proper schema data
 def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
                 homePhone = 0,officePhone = 0, pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
@@ -238,8 +312,42 @@ def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",pictureP
         print(e)
         pass
 
-def insertPGFaculty():
-    print('TODO accept proper params for schema with default values except for PK')
+def insertPGFaculty(netid,pidm,selected,isStudent,isAffiliate,isRetired, picturePublic,
+                picturePrivate,firstname,lastname,prefName,namePrefix, officePhone, email, orgn, title,
+                street1,street2,city,state,zip,country):
+    #try catch since duplicates will be skipped
+    try:
+        con = psycopg2.connect(
+            host = "cypherlenovo", #beep boop machine name
+            database = "msu_students" , #db name
+            user = 'postgres',
+            password = '1234',
+            port = '5433' #default port is 5432
+        )
+
+        #escape any possible quotes
+        for local in locals():
+            local = local.replace("'","\'").replace('"','\"')
+
+        cur = con.cursor()
+        command = """INSERT INTO faculty (netid,pidm,selected,isstudent,isaffiliate,
+                    isretired,picturepublic,pictureprivate,firstname,lastname,prefname,
+                    nameprefix,officephone,email,orgn,title,street1,street2,
+                    city,state,zip,country)VALUES ('{0}','{1}','{2}','{3}','{4}','{5}',
+                    '{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}',
+                    '{16}','{17}','{18}','{19}','{20}','{21}')""".format(netid,pidm,selected,isStudent
+                    ,isAffiliate,isRetired, picturePublic,picturePrivate,firstname,lastname,prefName,
+                    namePrefix, officePhone, email, orgn, title,street1,street2,city,state,zip,country)
+        print('Executing',command)
+        cur.execute(command)
+        con.commit()
+
+        #avoid memory leaks
+        cur.close()
+        con.close()
+    except Exception as e:
+        print(e)
+        pass
 
 def getCookies():
     print("Getting 24 hour cookies...")

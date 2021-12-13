@@ -1,7 +1,4 @@
 from math import sin,cos,sqrt,atan2,radians
-from typing import MappingView
-
-from numpy import average
 import openrouteservice as ors
 from PIL import Image
 import requests
