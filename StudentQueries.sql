@@ -1,7 +1,5 @@
---visualization ideas: heat map for USA
---number of people per state/top states for attendance
---top states with more than one confirmed student in the family (same number)
---average distance from address to MSU
+--map of msu families
+--average distance from home to MSU method calculation
 
 --total num in database
 select count(*) 

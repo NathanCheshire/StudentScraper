@@ -1,4 +1,7 @@
+from math import sin,cos,sqrt,atan2,radians
 from typing import MappingView
+
+from numpy import average
 import openrouteservice as ors
 from PIL import Image
 import requests
@@ -308,9 +311,49 @@ def generateGoogleMapsLink(street = '400 S. Monroe St.', city = 'Tallahassee',
 
     return (rawQuery + specificQuery)
 
+MSU_HEART_LAT = 33.453516040681706
+MSU_HEART_LON = -88.78947571055713
+EARTH_RADIUS = 6373.0
+
+def calculateAverageDistanceToState():
+    print('Calculating average distance from home to MSU...')
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students",
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon
+                              from home_addresses;''', con)
+    arr = df.values
+    
+    distanceSum = 0.0
+    numVals = 0
+
+    for i in range(len(arr)):
+        lat = radians(arr[i][0])
+        lon = radians(arr[i][1])
+
+        dlat = radians(MSU_HEART_LAT) - lat
+        dlon = radians(MSU_HEART_LON) - lon
+
+        a = sin(dlat / 2)**2 + cos(lat) * cos(radians(MSU_HEART_LAT)) * sin(dlon / 2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        distanceSum = distanceSum + EARTH_RADIUS * c
+        numVals = numVals + 1
+
+    averageDistanceKM = distanceSum / float(numVals)
+    print('Average distance is', '%.3f' % averageDistanceKM,'kilometers')
+    print('Average distance is', '%.3f' % (averageDistanceKM * 0.62137),'miles')
+
 def generateStreetViewImage(lat, lon, width = 1000, height = 1000):
     print('TODO ;)')
     #https://developers.google.com/maps/documentation/streetview/overview
+    #You'll need a google api key for this, gross
 
 if __name__ == '__main__':
     #createUsaHeatmap()
@@ -327,4 +370,4 @@ if __name__ == '__main__':
 
     #pathFromNetidToNetid('nvc29','mnd199')
 
-    print(generateGoogleMapsLink())
+    calculateAverageDistanceToState()
