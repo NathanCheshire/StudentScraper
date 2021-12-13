@@ -355,19 +355,23 @@ def generateStreetViewImage(lat, lon, width = 1000, height = 1000):
     #https://developers.google.com/maps/documentation/streetview/overview
     #You'll need a google api key for this, gross
 
+def main(args1, args2, args3):
+    if args1 == 'heatmap':
+        createUsaHeatmap()
+    elif args1 == 'static image from netid':
+        generateStaticImageFromNetid(args2, save = args3)
+    elif args1 == 'world labeled map':
+        #todo this method can't handle all the addresses, find a better way to show waypoints
+        createWorldLabeledMap(waypoints = args2)
+    elif args1 == 'state map':
+        #removing MS did not help that much, think of a better method, maybe a wider color range
+        generateStateMap()
+    elif args1 == 'path from netid to netid':
+        #TODO react from end to navigate between semeesters and then between maps
+        #TODO waypoints should have a link to googlemaps to how to get there from current location
+        pathFromNetidToNetid(args2, args3)
+    elif args1 == 'avg dist':
+        calculateAverageDistanceToState()
+
 if __name__ == '__main__':
-    #createUsaHeatmap()
-    #generateStaticImageFromNetid('mdg476', save = True)
-
-    #todo this method can't handle all the addresses, find a better way to show waypoints
-    #createWorldLabeledMap(waypoints = 700)
-
-    #removing MS did not help that much, think of a better method, maybe a wider color range
-    #generateStateMap()
-
-    #TODO react from end to navigate between semeesters and then between maps
-    #TODO waypoints should have a link to googlemaps to how to get there from current location
-
-    #pathFromNetidToNetid('nvc29','mnd199')
-
-    calculateAverageDistanceToState()
+    main('avg dist')
