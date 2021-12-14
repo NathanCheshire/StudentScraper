@@ -21,7 +21,7 @@ states = [ 'AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
 
 #generates a static image based off of a lat/lon input
 def generateStaticImage(lat, lon, width, height, save = False):
-    key = open("geokey.key").read()
+    key = open("Keys/geokey.key").read()
     
     baseString = ('http://www.mapquestapi.com/staticmap/v5/map?' 
     + 'key=' + str(key) + '&type=map&size=' + str(width) + ',' 
@@ -291,7 +291,7 @@ def pathFromNetidToNetid(netid1, netid2):
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
-    client = ors.Client(key = open("mapkey.key").read())
+    client = ors.Client(key = open("Keys/mapkey.key").read())
     route = client.directions(coordinates = coordinates, profile = 'driving-car', format = 'geojson')
     folium.GeoJson(route, name = ('Path from ' + str(netid1) + " to " + str(netid2))).add_to(m)
 
@@ -352,7 +352,7 @@ def generateStreetViewImage(lat, lon, width = 1000, height = 1000):
     #https://developers.google.com/maps/documentation/streetview/overview
     #You'll need a google api key for this, gross
 
-def main(args1, args2, args3):
+def main(args1, args2 = "", args3 = ""):
     if args1 == 'heatmap':
         createUsaHeatmap()
     elif args1 == 'static image from netid':
@@ -370,5 +370,8 @@ def main(args1, args2, args3):
     elif args1 == 'avg dist':
         calculateAverageDistanceToState()
 
+def generateStudentsWhoSwitched(semester1,semester2):
+    print('Comparing declared primary majors from each semester')
+
 if __name__ == '__main__':
-    main('avg dist')
+    main('heatmap')

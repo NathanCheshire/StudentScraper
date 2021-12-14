@@ -28,7 +28,7 @@ def insertAddresses(startFrom = 0):
     cur.close()
     con.close()
 
-    key = open("geokey.key").read()
+    key = open("Keys/geokey.key").read()
 
     for homeAddressInd in range(len(homeAddresses)):
         if homeAddressInd < startFrom:

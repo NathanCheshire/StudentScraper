@@ -153,14 +153,14 @@ and netid in (select netid from students where homestreet = officestreet)
 --todo rename database to someting that represents all data for this semester
 -- since we will be doing this each semester
 
---faculty stuff
---faculty PK: netid
---faculty attributes: netid, pidm, selected, student, affiliate, retired
--- picture public, picture private, firstname, lastname, preffered within name
--- adr elements
---phone
---email
---roles
+--faculty stuff and Dr. Mark Keenum
+select netid,orgn,title from faculty
+select count(*) from faculty
+select * from faculty where lastname = 'Keenum'
+
+--distinct titles
+select distinct title 
+from faculty
 
 --transactions
 begin;
