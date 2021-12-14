@@ -44,3 +44,6 @@ By calling `pathFromNetidToNetid()` and passing in two netids, I can just as eas
 ## Figure 2 - Route from netid to netid
 
 <img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png"/>
+
+## Heatmap (Fall 2021)
+<b>https://nathancheshire.github.io/StudentHeatFall2021/<b/>
