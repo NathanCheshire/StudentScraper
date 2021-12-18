@@ -20,7 +20,7 @@ states = [ 'AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
            'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
 
 #generates a static image based off of a lat/lon input
-def generateStaticImage(lat, lon, width, height, save = False):
+def generateStaticImage(lat, lon, width, height, save = False, saveNameParam = "NULL"):
     key = open("Keys/geokey.key").read()
     
     baseString = ('http://www.mapquestapi.com/staticmap/v5/map?' 
@@ -32,7 +32,11 @@ def generateStaticImage(lat, lon, width, height, save = False):
     im.show()
 
     if save:
-        saveName = 'Figures/' + str(lat) + "-" + str(lon) + ".png"
+        saveName = 'Figures/' + str(lat) + "-" + str(lon) + ".png"  
+
+        if saveNameParam != 'NULL':
+            saveName = 'Figures/' + saveNameParam + ".png"
+            
         im.save(saveName)
         print('Image saved as:',saveName)
 
@@ -51,7 +55,28 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
     lat = arr[0][0]
     lon = arr[0][1]
 
-    generateStaticImage(lat, lon, width, height, save)
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students",
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query(f'select homestreet, homecity, homestate, homezip, homecountry from students where netid = \'{netid}\'', con)
+    arr = df.values
+    street = arr[0][0] 
+    city = arr[0][1]
+    state = arr[0][2]
+    zip = arr[0][3]
+    country = arr[0][4]
+
+    if street == 'NULL':
+        print('NetID address not found in local db, dammit Michael.')
+        return
+
+    saveName = str(street) + " " + str(city) + " " + str(state) + " " + str(zip) + " " + str(country)
+    generateStaticImage(lat, lon, width, height, save, saveNameParam = saveName)
 
 #the main one: generates a heap map from all lat/lon pairs in our home_addresses table for students
 def createUsaHeatmap():
@@ -76,6 +101,10 @@ def createUsaHeatmap():
     m.save("Maps/StudentHeat.html")
 
     print('Heatmap generated and saved as StudentHeat.html')
+
+#TODO
+def createStateLabelMap(state):
+    pass
 
 #generates a folium map with waypoints representing each student
 def createWorldLabeledMap(waypoints = 500):
@@ -288,7 +317,7 @@ def pathFromNetidToNetid(netid1, netid2):
             location=[lat, lon],
             popup = popup,
             tooltip = str(firstname + " " + lastname),
-            icon = folium.Icon(color='darkred')
+            icon = folium.Icon(color='darkred') #maroon makes sense ig
         ).add_to(m)
 
     client = ors.Client(key = open("Keys/mapkey.key").read())
@@ -347,8 +376,8 @@ def calculateAverageDistanceToState():
     print('Average distance is', '%.3f' % averageDistanceKM,'kilometers')
     print('Average distance is', '%.3f' % (averageDistanceKM * 0.62137),'miles')
 
-def generateStreetViewImage(lat, lon, width = 1000, height = 1000):
-    print('TODO ;)')
+def generateStreetViewImage(street, city, state, zip, country, width = 1000, height = 1000, save = False):
+    print('Acquiring street view image for provided address; save:',str(save))
     #https://developers.google.com/maps/documentation/streetview/overview
     #You'll need a google api key for this, gross
 
@@ -364,7 +393,6 @@ def main(args1, args2 = "", args3 = ""):
         #removing MS did not help that much, think of a better method, maybe a wider color range
         generateStateMap()
     elif args1 == 'path from netid to netid':
-        #TODO react from end to navigate between semeesters and then between maps
         #TODO waypoints should have a link to googlemaps to how to get there from current location
         pathFromNetidToNetid(args2, args3)
     elif args1 == 'avg dist':
@@ -372,6 +400,7 @@ def main(args1, args2 = "", args3 = ""):
 
 def generateStudentsWhoSwitched(semester1,semester2):
     print('Comparing declared primary majors from each semester')
+    pass
 
 if __name__ == '__main__':
-    main('heatmap')
+    main('')
