@@ -103,8 +103,65 @@ def createUsaHeatmap():
     print('Heatmap generated and saved as StudentHeat.html')
 
 #TODO
-def createStateLabelMap(state):
-    pass
+def createStateLabelMap(stateID):
+    if stateID not in states:
+        print('Not a valid StateID, the following are valid stateIDs:')
+        print(states)
+        return
+
+    print('Generating map with waypoints at addresses with firstname, lastname, and netid for state',stateID)
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = "msu_students",
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
+                              students.netid, students.firstname, students.lastname,
+                              students.homecity, students.homestate, students.homestreet,
+                              students.homezip, students.homecountry
+                              from home_addresses
+                              inner join students on home_addresses.netid = students.netid
+                              where students.homestate = ''' + f'\'{stateID}\';', con)
+
+    m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
+    arr = df.values
+
+    for i in range(0, len(arr)):
+        lat = arr[i][0]
+        lon = arr[i][1]
+        netid = arr[i][2]
+        firstname = arr[i][3]
+        lastname = arr[i][4]
+        city = arr[i][5]
+        state = arr[i][6]
+        street = arr[i][7]
+        zip = arr[i][8]
+        country = arr[i][9]
+
+        html = f'''
+        <h1>{firstname} {lastname}, {netid}</h1>
+        <p>
+        {street}<br/>{city}, {state}, {zip}<br/>{country}
+        </p>
+        '''
+        
+        iframe = folium.IFrame(html)
+        popup = folium.Popup(iframe, min_width = 250, max_width = 250)
+
+        folium.Marker(
+            location=[lat, lon],
+            popup = popup,
+            tooltip = str(firstname + " " + lastname),
+            icon = folium.Icon(color='darkred')
+        ).add_to(m)
+
+    saveName = 'Maps/StudentNameMap_' + str(stateID) + '.html'
+    m.save(saveName)
+    print('Map Generated and saved as',saveName)
 
 #generates a folium map with waypoints representing each student
 def createWorldLabeledMap(waypoints = 500):
@@ -397,10 +454,12 @@ def main(args1, args2 = "", args3 = ""):
         pathFromNetidToNetid(args2, args3)
     elif args1 == 'avg dist':
         calculateAverageDistanceToState()
+    elif args1 == 'state labeled map':
+        createStateLabelMap(args2)
 
 def generateStudentsWhoSwitched(semester1,semester2):
     print('Comparing declared primary majors from each semester')
     pass
 
 if __name__ == '__main__':
-    main('')
+    main('state labeled map','LA')

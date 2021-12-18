@@ -162,6 +162,9 @@ select * from faculty where lastname = 'Keenum'
 select distinct title 
 from faculty
 
+--Ruston kids that went to state for some reason
+select firstname,lastname,netid,major,class from students where homecity = 'Ruston' and homestate = 'LA'
+
 --transactions
 begin;
 rollback;
