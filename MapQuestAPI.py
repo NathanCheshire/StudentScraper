@@ -2,12 +2,12 @@ import psycopg2
 import requests
 import json
 
-def insertAddresses(startFrom = 0):
+def insertAddresses(startFrom = 0, database = 'msu_fall_2021'):
     print('Beginning insertions')
 
     con = psycopg2.connect(
             host = "cypherlenovo", 
-            database = "msu_students" ,
+            database = database,
             user = 'postgres',
             password = '1234',
             port = '5433'
@@ -56,10 +56,10 @@ def insertAddresses(startFrom = 0):
 
         insertAddress(netid, "home_addresses", lat, lng)
 
-def getNetIDs(tablename = 'students'):
+def getNetIDs(tablename = 'students', database = 'msu_fall_2021'):
     con = psycopg2.connect(
             host = "cypherlenovo",
-            database = "msu_students",
+            database = database,
             user = 'postgres',
             password = '1234',
             port = '5433'
@@ -71,12 +71,12 @@ def getNetIDs(tablename = 'students'):
 
     return cur.fetchall()
 
-def insertAddress(netid, table, lat = "NULL", lon = "NULL"):
+def insertAddress(netid, table, lat = "NULL", lon = "NULL", database = 'msu_fall_2021'):
     #try catch since duplicates will be skipped
     try:
         con = psycopg2.connect(
             host = "cypherlenovo",
-            database = "msu_students",
+            database = database,
             user = 'postgres',
             password = '1234',
             port = '5433'

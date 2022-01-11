@@ -41,10 +41,10 @@ def generateStaticImage(lat, lon, width, height, save = False, saveNameParam = "
         print('Image saved as:',saveName)
 
 #the party trick: generates a static 'google maps' like view of a student's house given their netid
-def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 1000):
+def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 1000, database = 'msu_fall_2021'):
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -57,7 +57,7 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
 
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -79,12 +79,12 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
     generateStaticImage(lat, lon, width, height, save, saveNameParam = saveName)
 
 #the main one: generates a heap map from all lat/lon pairs in our home_addresses table for students
-def createUsaHeatmap():
+def createUsaHeatmap(database = 'msu_fall_2021'):
     print('Generating heatmap based on home addresses')
 
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -102,8 +102,7 @@ def createUsaHeatmap():
 
     print('Heatmap generated and saved as StudentHeat.html')
 
-#TODO
-def createStateLabelMap(stateID):
+def createStateLabelMap(stateID, database = 'msu_fall_2021'):
     if stateID not in states:
         print('Not a valid StateID, the following are valid stateIDs:')
         print(states)
@@ -113,7 +112,7 @@ def createStateLabelMap(stateID):
 
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -159,17 +158,17 @@ def createStateLabelMap(stateID):
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
-    saveName = 'Maps/StudentNameMap_' + str(stateID) + '.html'
+    saveName = 'Maps/StudentNameMap_' + str(stateID) + '_State.html'
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
 #generates a folium map with waypoints representing each student
-def createWorldLabeledMap(waypoints = 500):
+def createWorldLabeledMap(waypoints = 500, database = 'msu_fall_2021'):
     print('Generating map with waypoints at addresses with firstname, lastname, and netid')
 
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -222,7 +221,7 @@ def createWorldLabeledMap(waypoints = 500):
     print('Map Generated and saved as',saveName)
 
 #generates a csv representing the number of students from MSU by state
-def generateStudentByStateCSV():
+def generateStudentByStateCSV(database = 'msu_fall_2021'):
     print('Generating csv data for students by home state')
 
     f = open('Data/StudentsByStateNormalized.csv','w+')
@@ -239,7 +238,7 @@ def generateStudentByStateCSV():
 
             con = psycopg2.connect(
                 host = "cypherlenovo",
-                database = "msu_students",
+                database = database,
                 user = 'postgres',
                 password = '1234',
                 port = '5433'
@@ -257,7 +256,7 @@ def generateStudentByStateCSV():
 
             con = psycopg2.connect(
                 host = "cypherlenovo",
-                database = "msu_students",
+                database = database,
                 user = 'postgres',
                 password = '1234',
                 port = '5433'
@@ -270,14 +269,14 @@ def generateStudentByStateCSV():
     print('CSV generated')
 
 # checks al the state abreviations within the student table
-def checkStateAbreviations():
+def checkStateAbreviations(database = 'msu_fall_2021'):
     query = '''select distinct homestate 
                from students 
                where homestate != 'NULL' and homestate != 'None';'''
 
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -293,7 +292,7 @@ def checkStateAbreviations():
 def validateStateAbr(abrev):
     return abrev in states and abrev != 'DC'
 
-#generates a map representing the students of MSU by statae
+#generates a map representing the students of MSU by state
 def generateStateMap():
     stateMap = folium.Map(location=[40, -95], zoom_start=4)
 
@@ -321,12 +320,12 @@ def generateStateMap():
 
 #generates a map using folium and openrouteservice to connect two netid addresses via
 # a driveable route
-def pathFromNetidToNetid(netid1, netid2):
+def pathFromNetidToNetid(netid1, netid2, database = 'msu_fall_2021'):
     print('Generating path from',netid1,"to",netid2,"...")
 
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -398,12 +397,12 @@ MSU_HEART_LAT = 33.453516040681706
 MSU_HEART_LON = -88.78947571055713
 EARTH_RADIUS = 6373.0
 
-def calculateAverageDistanceToState():
+def calculateAverageDistanceToState(database = 'msu_fall_2021'):
     print('Calculating average distance from home to MSU...')
 
     con = psycopg2.connect(
         host = "cypherlenovo",
-        database = "msu_students",
+        database = database,
         user = 'postgres',
         password = '1234',
         port = '5433'
@@ -457,9 +456,10 @@ def main(args1, args2 = "", args3 = ""):
     elif args1 == 'state labeled map':
         createStateLabelMap(args2)
 
-def generateStudentsWhoSwitched(semester1,semester2):
+#names passed in need to be the db name of the semester
+def generateStudentsWhoSwitched(semester1, semester2):
     print('Comparing declared primary majors from each semester')
     pass
 
 if __name__ == '__main__':
-    main('state labeled map','LA')
+    main('State labeled map','LA')

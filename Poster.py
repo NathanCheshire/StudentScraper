@@ -290,7 +290,7 @@ def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",pictureP
     try:
         con = psycopg2.connect(
             host = "cypherlenovo", #beep boop machine name
-            database = "msu_students" , #db name
+            database = DATABASE , #db name
             user = 'postgres',
             password = '1234',
             port = '5433' #default port is 5432
@@ -300,7 +300,18 @@ def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",pictureP
             local = local.replace("'","\'").replace('"','\"')
 
         cur = con.cursor()
-        command = "INSERT INTO students (netid,email,firstname,lastname,picturepublic,pictureprivate,major,class,homephone,officephone,pidm,selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,homezip,homecountry,officestreet,officecity,officestate,officezip,officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}')".format(netid,email,first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
+
+        command = """INSERT INTO students (netid,email,firstname,lastname,
+        picturepublic,pictureprivate,major,class,homephone,officephone,pidm,
+        selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,
+        homezip,homecountry,officestreet,officecity,officestate,officezip,
+        officecountry) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}',
+        '{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}',
+        '{18}','{19}','{20}','{21}','{22}','{23}','{24}')""".format(netid,email,
+        first,last,picturePublic,picturePrivate,major,class_,homePhone,officePhone,
+        pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,
+        homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
+
         print('Executing',command)
         cur.execute(command)
         con.commit()
@@ -319,7 +330,7 @@ def insertPGFaculty(netid,pidm,selected,isStudent,isAffiliate,isRetired, picture
     try:
         con = psycopg2.connect(
             host = "cypherlenovo", #beep boop machine name
-            database = "msu_students" , #db name
+            database = DATABASE , #db name
             user = 'postgres',
             password = '1234',
             port = '5433' #default port is 5432
@@ -403,6 +414,8 @@ def getCookies():
         yummyCookies = driver.get_cookies()
 
         return yummyCookies
+
+DATABASE = 'msu_spring_2022'
 
 if __name__ == "__main__":
     apiMain(studentMode = False)
