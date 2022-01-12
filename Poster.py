@@ -301,6 +301,12 @@ def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",pictureP
 
         cur = con.cursor()
 
+        #todo re-run since we miss stuff like this: firststreet = 'Popp'S'
+        for local in locals():
+            if "'" in local or '"' in local:
+                local = local.strip("'").strip('"');
+
+
         command = """INSERT INTO students (netid,email,firstname,lastname,
         picturepublic,pictureprivate,major,class,homephone,officephone,pidm,
         selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,
@@ -418,4 +424,4 @@ def getCookies():
 DATABASE = 'msu_spring_2022'
 
 if __name__ == "__main__":
-    apiMain(studentMode = False)
+    apiMain(studentMode = True)
