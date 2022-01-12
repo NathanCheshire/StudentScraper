@@ -301,11 +301,33 @@ def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",pictureP
 
         cur = con.cursor()
 
-        #todo re-run since we miss stuff like this: firststreet = 'Popp'S'
-        for local in locals():
-            if "'" in local or '"' in local:
-                local = local.strip("'").strip('"');
-
+        #todo test case for if this worked: pma107
+        #todo add this for faculty
+        #todo make sure tables are correct after that
+        #todo add netidnum column
+        #todo use mapquestapi to get lat/lon table for students
+        
+        netid = netid.replace("'",'').replace('"','')
+        email = email.replace("'",'').replace('"','')
+        first = first.replace("'",'').replace('"','')
+        last = last.replace("'",'').replace('"','')
+        picturePublic = picturePublic.replace("'",'').replace('"','')
+        picturePrivate = picturePrivate.replace("'",'').replace('"','')
+        class_ = class_.replace("'",'').replace('"','')
+        selected = selected.replace("'",'').replace('"','')
+        isStudent = isStudent.replace("'",'').replace('"','')
+        isAffiliate = isAffiliate.replace("'",'').replace('"','')
+        isRetired = isRetired.replace("'",'').replace('"','')
+        homeStreet = homeStreet.replace("'",'').replace('"','')
+        homeCity = homeCity.replace("'",'').replace('"','')
+        homeState = homeState.replace("'",'').replace('"','')
+        homeZip = homeZip.replace("'",'').replace('"','')
+        homeCountry = homeCountry.replace("'",'').replace('"','')
+        officeStreet = officeStreet.replace("'",'').replace('"','')
+        officeCity = officeCity.replace("'",'').replace('"','')
+        officeState = officeState.replace("'",'').replace('"','')
+        officeZip = officeZip.replace("'",'').replace('"','')
+        officeCountry = officeCountry.replace("'",'').replace('"','')
 
         command = """INSERT INTO students (netid,email,firstname,lastname,
         picturepublic,pictureprivate,major,class,homephone,officephone,pidm,
