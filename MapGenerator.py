@@ -510,7 +510,7 @@ def parseSpacesForURL(string):
     return re.sub('[\s]+','%20', string)
 
 #outputs a list of other students from the passed netid's city,state combo
-def listStudentsInCityState(netid, database = 'msu_fall_2021'):
+def listStudentsInCityStateByNetid(netid, database = 'msu_fall_2021'):
     print(f'Finding students from {netid}\'s home town')
 
     con = psycopg2.connect(
@@ -527,7 +527,29 @@ def listStudentsInCityState(netid, database = 'msu_fall_2021'):
                             and homecity = (select homecity from students where netid = \'''' + netid + '''\') 
                             order by class, major''',con)
     
-    saveName = 'Data/Studnets_From_' + netid + '_Town.csv'
+    saveName = 'Data/Students_From_' + netid + '_Town.csv'
+    df.to_csv(saveName)  
+    print(f'File saved as {saveName}')
+
+#outputs a list of other students from the passed netid's city,state combo
+def listStudentsInCityState(city, state, database = 'msu_fall_2021'):
+    print(f'Finding students from {city}, {state}')
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = database,
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query('''select firstname, lastname, netid, major, class, homephone, homestreet 
+                            from students 
+                            where homestate = \'''' + state + '''\' 
+                            and homecity = \'''' + city + '''\'
+                            order by class, major''',con)
+    
+    saveName = 'Data/Students_From_' + city + "_" + state + '_Town.csv'
     df.to_csv(saveName)  
     print(f'File saved as {saveName}')
 
@@ -542,7 +564,7 @@ def main():
     #calculateAverageDistanceToState()
     #createStateLabelMap("LA")
     #generateStudentsWhoSwitched('msu_fall_2021', 'msu_fall_2022')
-    listStudentsInCityState('mnd199')
+    listStudentsInCityState('Starkville','MS')
 
 if __name__ == '__main__':
     main()
