@@ -6,13 +6,12 @@ import pandas as pd
 import psycopg2
 import folium
 from folium import plugins
+import re
 
 # PR - Puerto Rico
 # AE -> Armed Forces Europe
 # AP -> Armed Forces Pacific
 # DC -> District of Columbia
-
-#credit: https://gist.github.com/JeffPaine/3083347 
 states = [ 'AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
            'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME',
            'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM',
@@ -102,6 +101,7 @@ def createUsaHeatmap(database = 'msu_fall_2021'):
 
     print('Heatmap generated and saved as StudentHeat.html')
 
+#creates a waypoint map of all students from the specified state
 def createStateLabelMap(stateID, database = 'msu_fall_2021'):
     if stateID not in states:
         print('Not a valid StateID, the following are valid stateIDs:')
@@ -162,7 +162,8 @@ def createStateLabelMap(stateID, database = 'msu_fall_2021'):
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
-#generates a folium map with waypoints representing each student
+#generates a folium map with waypoints representing each student, you can limit the number of waypoints since 
+# folium sucks at rendering tons of waypoints for some reason even though it uses leaflet.js
 def createWorldLabeledMap(waypoints = 500, database = 'msu_fall_2021'):
     print('Generating map with waypoints at addresses with firstname, lastname, and netid')
 
@@ -268,7 +269,7 @@ def generateStudentByStateCSV(database = 'msu_fall_2021'):
     
     print('CSV generated')
 
-# checks al the state abreviations within the student table
+# checks all the state abreviations within the student table
 def checkStateAbreviations(database = 'msu_fall_2021'):
     query = '''select distinct homestate 
                from students 
@@ -397,6 +398,7 @@ MSU_HEART_LAT = 33.453516040681706
 MSU_HEART_LON = -88.78947571055713
 EARTH_RADIUS = 6373.0
 
+#calculates the average distance from each student to the heart of MSU (the drill field center)
 def calculateAverageDistanceToState(database = 'msu_fall_2021'):
     print('Calculating average distance from home to MSU...')
 
@@ -432,6 +434,7 @@ def calculateAverageDistanceToState(database = 'msu_fall_2021'):
     print('Average distance is', '%.3f' % averageDistanceKM,'kilometers')
     print('Average distance is', '%.3f' % (averageDistanceKM * 0.62137),'miles')
 
+#generates and saves a street view image of the address associated with the provided netid
 def generateStreetViewImage(netid, save = True):
     query = '''select homestreet, homecity, homestate, homezip, homecountry 
                from students 
@@ -475,11 +478,58 @@ def generateStreetViewImage(netid, save = True):
 #names passed in need to be the db name of the semester
 def generateStudentsWhoSwitched(semester1, semester2):
     print('Comparing declared primary majors from each semester')
-    #need to connect to two databases if we don't change to single database
+    #TODO change to a single database but tables named per semester so that
+    # it's easier to access them?
 
 #returns the address for the netid for the current database
-def getAddressFromNetID(netid):
-    pass
+def getAddressFromNetID(netid, database):
+    query = ('''select homestreet, homecity, homestate, homezip, homecountry 
+               from ''' + database + ''' where netid =\'''' + netid + '\';')
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = 'msu_fall_2021',
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query(query, con)
+    arr = df.values
+    
+    street = arr[0][0]
+    city = arr[0][1]
+    state = arr[0][2]
+    zip = arr[0][3]
+    country = arr[0][4]
+
+    return (street + ' ' + city + ' ' + state + ' ' + zip + ' ' + country);
+
+#converts all whitspace of length 1 or greater to %20 to be used in a url
+def parseSpacesForURL(string):
+    return re.sub('[\s]+','%20', string)
+
+#outputs a list of other students from the passed netid's city,state combo
+def listStudentsInCityState(netid, database = 'msu_fall_2021'):
+    print(f'Finding students from {netid}\'s home town')
+
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = database,
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query('''select firstname, lastname, netid, major, class, homephone, homestreet 
+                            from students 
+                            where homestate = (select homestate from students where netid = \'''' + netid + '''\') 
+                            and homecity = (select homecity from students where netid = \'''' + netid + '''\') 
+                            order by class, major''',con)
+    
+    saveName = 'Data/Studnets_From_' + netid + '_Town.csv'
+    df.to_csv(saveName)  
+    print(f'File saved as {saveName}')
 
 def main():
     #createUsaHeatmap()
@@ -492,7 +542,7 @@ def main():
     #calculateAverageDistanceToState()
     #createStateLabelMap("LA")
     #generateStudentsWhoSwitched('msu_fall_2021', 'msu_fall_2022')
-    generateStaticImageFromNetid('mrm957')
+    listStudentsInCityState('mnd199')
 
 if __name__ == '__main__':
     main()
