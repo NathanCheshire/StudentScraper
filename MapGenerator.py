@@ -492,7 +492,7 @@ def main():
     #calculateAverageDistanceToState()
     #createStateLabelMap("LA")
     #generateStudentsWhoSwitched('msu_fall_2021', 'msu_fall_2022')
-    generateStreetViewImage('mrm957')
+    generateStaticImageFromNetid('mrm957')
 
 if __name__ == '__main__':
     main()
