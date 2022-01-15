@@ -50,7 +50,7 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
         port = '5433'
     )
 
-    df = pd.read_sql_query(f'select lat,lon from home_addresses where netid = \'{netid}\'', con)
+    df = pd.read_sql_query(f'select lat,lon from student_home_addresses where netid = \'{netid}\'', con)
     arr = df.values
     lat = arr[0][0]
     lon = arr[0][1]
@@ -78,7 +78,7 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
     saveName = str(street) + " " + str(city) + " " + str(state) + " " + str(zip) + " " + str(country)
     generateStaticImage(lat, lon, width, height, save, saveNameParam = saveName)
 
-#the main one: generates a heap map from all lat/lon pairs in our home_addresses table for students
+#the main one: generates a heap map from all lat/lon pairs in our student_home_addresses table for students
 def createUsaHeatmap(database = 'msu_fall_2021'):
     print('Generating heatmap based on home addresses')
 
@@ -90,7 +90,7 @@ def createUsaHeatmap(database = 'msu_fall_2021'):
         port = '5433'
     )
 
-    df = pd.read_sql_query('select lat,lon from home_addresses', con)
+    df = pd.read_sql_query('select lat,lon from student_home_addresses', con)
     df = df[['lat','lon']]
     
     df.head()
@@ -118,12 +118,12 @@ def createStateLabelMap(stateID, database = 'msu_fall_2021'):
         port = '5433'
     )
 
-    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
+    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
                               students.homezip, students.homecountry
-                              from home_addresses
-                              inner join students on home_addresses.netid = students.netid
+                              from student_home_addresses
+                              inner join students on student_home_addresses.netid = students.netid
                               where students.homestate = ''' + f'\'{stateID}\';', con)
 
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
@@ -174,12 +174,12 @@ def createWorldLabeledMap(waypoints = 500, database = 'msu_fall_2021'):
         port = '5433'
     )
 
-    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
+    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
                               students.homezip, students.homecountry
-                              from home_addresses
-                              inner join students on home_addresses.netid = students.netid''', con)
+                              from student_home_addresses
+                              inner join students on student_home_addresses.netid = students.netid''', con)
 
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
@@ -331,12 +331,12 @@ def pathFromNetidToNetid(netid1, netid2, database = 'msu_fall_2021'):
         port = '5433'
     )
 
-    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon, 
+    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
                               students.homezip, students.homecountry
-                              from home_addresses
-                              inner join students on home_addresses.netid = students.netid
+                              from student_home_addresses
+                              inner join students on student_home_addresses.netid = students.netid
                               where students.netid in (\'''' + netid1 + "\',\'" + netid2 + "\');", con)
 
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
@@ -408,8 +408,8 @@ def calculateAverageDistanceToState(database = 'msu_fall_2021'):
         port = '5433'
     )
 
-    df = pd.read_sql_query('''select home_addresses.lat, home_addresses.lon
-                              from home_addresses;''', con)
+    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon
+                              from student_home_addresses;''', con)
     arr = df.values
     
     distanceSum = 0.0
@@ -432,34 +432,67 @@ def calculateAverageDistanceToState(database = 'msu_fall_2021'):
     print('Average distance is', '%.3f' % averageDistanceKM,'kilometers')
     print('Average distance is', '%.3f' % (averageDistanceKM * 0.62137),'miles')
 
-def generateStreetViewImage(street, city, state, zip, country, width = 1000, height = 1000, save = False):
-    print('Acquiring street view image for provided address; save:',str(save))
-    #https://developers.google.com/maps/documentation/streetview/overview
-    #You'll need a google api key for this, gross
+def generateStreetViewImage(netid, save = True):
+    query = '''select homestreet, homecity, homestate, homezip, homecountry 
+               from students 
+               where netid =\'''' + netid + '\';'
 
-def main(args1, args2 = "", args3 = ""):
-    if args1 == 'heatmap':
-        createUsaHeatmap()
-    elif args1 == 'static image from netid':
-        generateStaticImageFromNetid(args2, save = args3)
-    elif args1 == 'world labeled map':
-        #todo this method can't handle all the addresses, find a better way to show waypoints
-        createWorldLabeledMap(waypoints = args2)
-    elif args1 == 'state map':
-        #removing MS did not help that much, think of a better method, maybe a wider color range
-        generateStateMap()
-    elif args1 == 'path from netid to netid':
-        #TODO waypoints should have a link to googlemaps to how to get there from current location
-        pathFromNetidToNetid(args2, args3)
-    elif args1 == 'avg dist':
-        calculateAverageDistanceToState()
-    elif args1 == 'state labeled map':
-        createStateLabelMap(args2)
+    con = psycopg2.connect(
+        host = "cypherlenovo",
+        database = 'msu_fall_2021',
+        user = 'postgres',
+        password = '1234',
+        port = '5433'
+    )
+
+    df = pd.read_sql_query(query, con)
+    arr = df.values
+    
+    street = arr[0][0]
+    city = arr[0][1]
+    state = arr[0][2]
+    zip = arr[0][3]
+    country = arr[0][4]
+
+    specificQuery = (street.replace(' ', '%20') + '%20' + city.replace(' ', '%20') + '%20' + 
+        state.replace(' ', '%20') + '%20' + zip.replace(' ', '%20') + '%20' + country.replace(' ', '%20'))
+
+    maxSize = 640;
+
+    key = open("Keys/googlemaps.key").read()
+
+    base = ('https://maps.googleapis.com/maps/api/streetview?location=' + specificQuery +
+             '&size=' + str(maxSize) + 'x' + str(maxSize) + '&key=' + key)
+
+    im = Image.open(requests.get(base, stream=True).raw)
+    im.show()
+
+    if save:
+        saveName = 'Figures/' + str(netid) + "_StreetView" + ".png"  
+        im.save(saveName)
+        print('Image saved as:', saveName)
 
 #names passed in need to be the db name of the semester
 def generateStudentsWhoSwitched(semester1, semester2):
     print('Comparing declared primary majors from each semester')
+    #need to connect to two databases if we don't change to single database
+
+#returns the address for the netid for the current database
+def getAddressFromNetID(netid):
     pass
 
+def main():
+    #createUsaHeatmap()
+    #generateStaticImageFromNetid('nvc29', save = True)
+
+    #todo this method can't handle all the addresses, find a better way to show waypoints
+    #createWorldLabeledMap(waypoints = 700)
+    #generateStateMap()
+    #pathFromNetidToNetid('nvc29', 'abc123')
+    #calculateAverageDistanceToState()
+    #createStateLabelMap("LA")
+    #generateStudentsWhoSwitched('msu_fall_2021', 'msu_fall_2022')
+    generateStreetViewImage('mrm957')
+
 if __name__ == '__main__':
-    main('State labeled map','LA')
+    main()
