@@ -35,7 +35,7 @@ By calling `generateStaticImageFromNetid()` and passing in a netid such as `wvb2
 
 ## Figure 1 - Aerial Address Generation soley from netid
 
-<img src="https://i.imgur.com/mS6MiE7.png" data-canonical-src="https://i.imgur.com/mS6MiE7.png" width = 75%/>
+<img src="https://i.imgur.com/mS6MiE7.png" data-canonical-src="https://i.imgur.com/mS6MiE7.png" width = 400px height = 400px/>
 
 ## Example 2
 
@@ -43,7 +43,7 @@ By calling `pathFromNetidToNetid()` and passing in two netids, I can produce the
 
 ## Figure 2 - Route from netid to netid
 
-<img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png" width = 75%/>
+<img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png" width = 400px height = 400px/>
 
 ## Example 3 - Generalized Visualization
 
