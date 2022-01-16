@@ -41,28 +41,12 @@ def generateStaticImage(lat, lon, width, height, save = False, saveNameParam = "
 
 #the party trick: generates a static 'google maps' like view of a student's house given their netid
 def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 1000, database = 'msu_fall_2021'):
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query(f'select lat,lon from student_home_addresses where netid = \'{netid}\'', con)
+    df = getPandasFrameFromPGQuery(f'select lat,lon from student_home_addresses where netid = \'{netid}\'', database = database)
     arr = df.values
     lat = arr[0][0]
     lon = arr[0][1]
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query(f'select homestreet, homecity, homestate, homezip, homecountry from students where netid = \'{netid}\'', con)
+    df = getPandasFrameFromPGQuery(f'select homestreet, homecity, homestate, homezip, homecountry from students where netid = \'{netid}\'', database = database)
     arr = df.values
     street = arr[0][0] 
     city = arr[0][1]
@@ -81,15 +65,7 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
 def createUsaHeatmap(database = 'msu_fall_2021'):
     print('Generating heatmap based on home addresses')
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query('select lat,lon from student_home_addresses', con)
+    df = getPandasFrameFromPGQuery('select lat,lon from student_home_addresses', database = database)
     df = df[['lat','lon']]
     
     df.head()
@@ -110,21 +86,15 @@ def createStateLabelMap(stateID, database = 'msu_fall_2021'):
 
     print('Generating map with waypoints at addresses with firstname, lastname, and netid for state',stateID)
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon, 
+    query = '''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
                               students.homezip, students.homecountry
                               from student_home_addresses
                               inner join students on student_home_addresses.netid = students.netid
-                              where students.homestate = ''' + f'\'{stateID}\';', con)
+                              where students.homestate = ''' + f'\'{stateID}\';'
+
+    df = getPandasFrameFromPGQuery(query, database = database)
 
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
@@ -167,20 +137,14 @@ def createStateLabelMap(stateID, database = 'msu_fall_2021'):
 def createWorldLabeledMap(waypoints = 500, database = 'msu_fall_2021'):
     print('Generating map with waypoints at addresses with firstname, lastname, and netid')
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon, 
+    query = '''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
                               students.homezip, students.homecountry
                               from student_home_addresses
-                              inner join students on student_home_addresses.netid = students.netid''', con)
+                              inner join students on student_home_addresses.netid = students.netid'''
+
+    df = getPandasFrameFromPGQuery(query, database = database)
 
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
@@ -237,15 +201,7 @@ def generateStudentByStateCSV(database = 'msu_fall_2021'):
                        from students 
                        where homestate = \'''' + stateAbrev + "\';"
 
-            con = psycopg2.connect(
-                host = "cypherlenovo",
-                database = database,
-                user = 'postgres',
-                password = '1234',
-                port = '5433'
-            )
-
-            df = pd.read_sql_query(query, con)
+            df = getPandasFrameFromPGQuery(query, database = database)
             arr = df.values
             total = total + arr[0][0]
 
@@ -255,15 +211,7 @@ def generateStudentByStateCSV(database = 'msu_fall_2021'):
                        from students 
                        where homestate = \'''' + stateAbrev + "\';"
 
-            con = psycopg2.connect(
-                host = "cypherlenovo",
-                database = database,
-                user = 'postgres',
-                password = '1234',
-                port = '5433'
-            )
-
-            df = pd.read_sql_query(query, con)
+            df = getPandasFrameFromPGQuery(query, database = database)
             arr = df.values
             f.write(stateAbrev + "," + str(float(arr[0][0]) / float(total)) + "\n")
     
@@ -275,15 +223,7 @@ def checkStateAbreviations(database = 'msu_fall_2021'):
                from students 
                where homestate != 'NULL' and homestate != 'None';'''
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query(query, con)
+    df = getPandasFrameFromPGQuery(query, database = database)
     arr = df.values
     
     for i in range(len(arr)):
@@ -324,21 +264,13 @@ def generateStateMap():
 def pathFromNetidToNetid(netid1, netid2, database = 'msu_fall_2021'):
     print('Generating path from',netid1,"to",netid2,"...")
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon, 
+    df = getPandasFrameFromPGQuery('''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
                               students.homezip, students.homecountry
                               from student_home_addresses
                               inner join students on student_home_addresses.netid = students.netid
-                              where students.netid in (\'''' + netid1 + "\',\'" + netid2 + "\');", con)
+                              where students.netid in (\'''' + netid1 + "\',\'" + netid2 + "\');", database = database)
 
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
@@ -385,6 +317,7 @@ def pathFromNetidToNetid(netid1, netid2, database = 'msu_fall_2021'):
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
+#generates a google maps link for the provided street,city,state,zip,country combo
 def generateGoogleMapsLink(street = '400 S. Monroe St.', city = 'Tallahassee', 
         state = 'FL', zip = '32399-0001', country = 'United States'):
     specificQuery = (street.replace(' ', '%20') + '%20' + city.replace(' ', '%20') + '%20' + 
@@ -402,16 +335,8 @@ EARTH_RADIUS = 6373.0
 def calculateAverageDistanceToState(database = 'msu_fall_2021'):
     print('Calculating average distance from home to MSU...')
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query('''select student_home_addresses.lat, student_home_addresses.lon
-                              from student_home_addresses;''', con)
+    df = getPandasFrameFromPGQuery('''select student_home_addresses.lat, student_home_addresses.lon
+                              from student_home_addresses;''')
     arr = df.values
     
     distanceSum = 0.0
@@ -440,16 +365,7 @@ def generateStreetViewImage(netid, save = True):
                from students 
                where netid =\'''' + netid + '\';'
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = 'msu_fall_2021',
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query(query, con)
-    arr = df.values
+    arr = getPandasFrameFromPGQuery(query).values
     
     street = arr[0][0]
     city = arr[0][1]
@@ -477,24 +393,14 @@ def generateStreetViewImage(netid, save = True):
 
 #names passed in need to be the db name of the semester
 def generateStudentsWhoSwitched(semester1, semester2):
-    print('Comparing declared primary majors from each semester')
-    #TODO change to a single database but tables named per semester so that
-    # it's easier to access them?
+    print(f'Comparing declared primary majors from semesters: {semester1} and {semester2}')
 
 #returns the address for the netid for the current database
 def getAddressFromNetID(netid, database):
     query = ('''select homestreet, homecity, homestate, homezip, homecountry 
                from ''' + database + ''' where netid =\'''' + netid + '\';')
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = 'msu_fall_2021',
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query(query, con)
+    df = getPandasFrameFromPGQuery(query, database = database)
     arr = df.values
     
     street = arr[0][0]
@@ -513,58 +419,47 @@ def parseSpacesForURL(string):
 def listStudentsInCityStateByNetid(netid, database = 'msu_fall_2021'):
     print(f'Finding students from {netid}\'s home town')
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query('''select firstname, lastname, netid, major, class, homephone, homestreet 
+    query = ('''select firstname, lastname, netid, major, class, homephone, homestreet 
                             from students 
                             where homestate = (select homestate from students where netid = \'''' + netid + '''\') 
                             and homecity = (select homecity from students where netid = \'''' + netid + '''\') 
-                            order by class, major''',con)
+                            order by class, major''')
     
     saveName = 'Data/Students_From_' + netid + '_Town.csv'
-    df.to_csv(saveName)  
+    getPandasFrameFromPGQuery(query, database = database).to_csv(saveName)  
     print(f'File saved as {saveName}')
 
 #outputs a list of other students from the passed netid's city,state combo
 def listStudentsInCityState(city, state, database = 'msu_fall_2021'):
     print(f'Finding students from {city}, {state}')
 
-    con = psycopg2.connect(
-        host = "cypherlenovo",
-        database = database,
-        user = 'postgres',
-        password = '1234',
-        port = '5433'
-    )
-
-    df = pd.read_sql_query('''select firstname, lastname, netid, major, class, homephone, homestreet 
+    query = '''select firstname, lastname, netid, major, class, homephone, homestreet 
                             from students 
                             where homestate = \'''' + state + '''\' 
                             and homecity = \'''' + city + '''\'
-                            order by class, major''',con)
+                            order by class, major'''
     
-    saveName = 'Data/Students_From_' + city + "_" + state + '_Town.csv'
-    df.to_csv(saveName)  
+    saveName = 'Data/Students_From_' + city + "_" + state + '.csv'
+    getPandasFrameFromPGQuery(query, database = database).to_csv(saveName)  
     print(f'File saved as {saveName}')
 
-def main():
-    #createUsaHeatmap()
-    #generateStaticImageFromNetid('nvc29', save = True)
+#returns a pandas data frame resulting from executing the provided 
+# sql query on the built connection using the provided credentials
+def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021', 
+        host = 'cypherlenovo', user = 'postgres', password = '1234', port = '5433'):
 
-    #todo this method can't handle all the addresses, find a better way to show waypoints
-    #createWorldLabeledMap(waypoints = 700)
-    #generateStateMap()
-    #pathFromNetidToNetid('nvc29', 'abc123')
-    #calculateAverageDistanceToState()
-    #createStateLabelMap("LA")
-    #generateStudentsWhoSwitched('msu_fall_2021', 'msu_fall_2022')
-    listStudentsInCityState('Starkville','MS')
+    con = psycopg2.connect(
+        host = host,
+        database = database,
+        user = user,
+        password = password,
+        port = port
+    )
+
+    return pd.read_sql_query(sqlQuery,con)
+
+def main():
+    generateStreetViewImage('nvc29')
 
 if __name__ == '__main__':
     main()
