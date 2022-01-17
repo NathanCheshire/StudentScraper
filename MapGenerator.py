@@ -392,8 +392,47 @@ def generateStreetViewImage(netid, save = True):
         print('Image saved as:', saveName)
 
 #names passed in need to be the db name of the semester
-def generateStudentsWhoSwitched(semester1, semester2):
-    print(f'Comparing declared primary majors from semesters: {semester1} and {semester2}')
+def generateStudentsWhoSwitched(databaseone, databasetwo):
+    print(f'Comparing declared primary majors from semesters: {databaseone} and {databasetwo}')
+    print("Assumptions: students table exists in each database")
+
+    studentsFirstSem = getPandasFrameFromPGQuery(
+        'select netid, homestreet, homecity, homestate, homezip, homecountry from students', 
+    database = 'msu_fall_2021')
+    studentsSecondSem = getPandasFrameFromPGQuery(
+        'select netid, homestreet, homecity, homestate, homezip, homecountry home from students', 
+    database = 'msu_spring_2022')
+
+    firstSemArr = studentsFirstSem.values
+    secondSemArr = studentsSecondSem.values
+
+    studentsWhoMovedNetIDs = []
+
+    for firstSemStudent in firstSemArr:
+        firstNetID = firstSemStudent[0]
+        firstStreet = firstSemStudent[1]
+        firstCity = firstSemStudent[2]
+        firstState = firstSemStudent[3]
+        firstZip = firstSemStudent[4]
+        firstCountry = firstSemStudent[5]
+
+        for secondSemStudent in secondSemArr:
+            secondNetID = secondSemStudent[0]
+            secondStreet = secondSemStudent[1]
+            secondCity = secondSemStudent[2]
+            secondState = secondSemStudent[3]
+            secondZip = secondSemStudent[4]
+            secondCountry = secondSemStudent[5]
+
+            #if net ids match and the netid is not already in the table
+            if (firstNetID == secondNetID and firstNetID not in studentsWhoMovedNetIDs
+                and (firstStreet is not secondStreet or 
+                     firstCity is not secondCity or
+                     firstState is not secondState or
+                     firstZip is not secondZip or
+                     firstCountry is not secondCountry)):
+                studentsWhoMovedNetIDs.append(firstNetID)
+                print(firstSemStudent,' moved: ', secondSemStudent)
 
 #returns the address for the netid for the current database
 def getAddressFromNetID(netid, database):
@@ -459,7 +498,8 @@ def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021',
     return pd.read_sql_query(sqlQuery,con)
 
 def main():
-    generateStreetViewImage('nvc29')
+    #generateStreetViewImage('nvc29')
+    generateStudentsWhoSwitched('msu_fall_2021','msu_fall_2022')
 
 if __name__ == '__main__':
     main()
