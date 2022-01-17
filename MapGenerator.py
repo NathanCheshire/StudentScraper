@@ -426,13 +426,28 @@ def generateStudentsWhoSwitched(databaseone, databasetwo):
 
             #if net ids match and the netid is not already in the table
             if (firstNetID == secondNetID and firstNetID not in studentsWhoMovedNetIDs
-                and (firstStreet is not secondStreet or 
-                     firstCity is not secondCity or
-                     firstState is not secondState or
-                     firstZip is not secondZip or
-                     firstCountry is not secondCountry)):
+                and (firstStreet != secondStreet or 
+                     firstCity != secondCity or
+                     firstState != secondState or
+                     firstZip != secondZip or
+                     firstCountry != secondCountry)):
                 studentsWhoMovedNetIDs.append(firstNetID)
-                print(firstSemStudent,' moved: ', secondSemStudent)
+
+    saveName = "Data/StudentsMoved_" + databaseone + "_" + databasetwo + ".csv"
+    f = open(saveName, "w+")
+    
+    for netid in studentsWhoMovedNetIDs:
+        firstAddy = getPandasFrameFromPGQuery(
+            '''select homestreet, homecity, homestate, homezip, homecountry''', 
+            database = databaseone).values
+        secondAddy = getPandasFrameFromPGQuery(
+            '''select homestreet, homecity, homestate, homezip, homecountry''', 
+            database = databasetwo).values
+        f.write(netid,"moved from:" + firstAddy[0],firstAddy[1],firstAddy[2],firstAddy[3],firstAddy[4],
+                "to:",secondAddy[0],secondAddy[1],secondAddy[2],secondAddy[3],secondAddy[4], sep = ' ')
+        
+    f.close()
+    print(f"Calculations complete and saved as {saveName}")
 
 #returns the address for the netid for the current database
 def getAddressFromNetID(netid, database):
