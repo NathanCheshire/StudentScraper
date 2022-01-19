@@ -398,15 +398,17 @@ def generateStudentsWhoSwitched(databaseone, databasetwo):
 
     studentsFirstSem = getPandasFrameFromPGQuery(
         'select netid, homestreet, homecity, homestate, homezip, homecountry from students', 
-    database = 'msu_fall_2021')
+    database = databaseone)
     studentsSecondSem = getPandasFrameFromPGQuery(
         'select netid, homestreet, homecity, homestate, homezip, homecountry home from students', 
-    database = 'msu_spring_2022')
+    database = databasetwo)
 
     firstSemArr = studentsFirstSem.values
     secondSemArr = studentsSecondSem.values
 
     studentsWhoMovedNetIDs = []
+
+    addressLog = open('Data/StudentsMovedAddresses',"w+")
 
     for firstSemStudent in firstSemArr:
         firstNetID = firstSemStudent[0]
@@ -433,21 +435,26 @@ def generateStudentsWhoSwitched(databaseone, databasetwo):
                      firstCountry != secondCountry)):
                 studentsWhoMovedNetIDs.append(firstNetID)
 
-    saveName = "Data/StudentsMoved_" + databaseone + "_" + databasetwo + ".csv"
+                #check for null/empty values
+                
+                builtStr = (firstNetID + ' moved from: ' + firstStreet + ' ' 
+                + firstCity + ' ' + firstState + ' ' + firstZip + ' ' 
+                + firstCountry + ' to ' + secondStreet + ' ' + secondCity + ' ' 
+                + secondState + ' ' + secondZip + ' ' + secondCountry)
+
+                addressLog.write(builtStr + "\n")
+        
+    addressLog.close()
+
+    saveName = "Data/StudentsMovedNetids.csv"
     f = open(saveName, "w+")
     
+    #error here for no colum homestreet??
     for netid in studentsWhoMovedNetIDs:
-        firstAddy = getPandasFrameFromPGQuery(
-            '''select homestreet, homecity, homestate, homezip, homecountry''', 
-            database = databaseone).values
-        secondAddy = getPandasFrameFromPGQuery(
-            '''select homestreet, homecity, homestate, homezip, homecountry''', 
-            database = databasetwo).values
-        f.write(netid,"moved from:" + firstAddy[0],firstAddy[1],firstAddy[2],firstAddy[3],firstAddy[4],
-                "to:",secondAddy[0],secondAddy[1],secondAddy[2],secondAddy[3],secondAddy[4], sep = ' ')
+       f.write(netid + '\n')
         
     f.close()
-    print(f"Calculations complete and saved as {saveName}")
+    print(f"Calculations complete and saved")
 
 #returns the address for the netid for the current database
 def getAddressFromNetID(netid, database):
@@ -514,7 +521,7 @@ def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021',
 
 def main():
     #generateStreetViewImage('nvc29')
-    generateStudentsWhoSwitched('msu_fall_2021','msu_fall_2022')
+    generateStudentsWhoSwitched('msu_fall_2021','msu_spring_2022')
 
 if __name__ == '__main__':
     main()

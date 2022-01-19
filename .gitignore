@@ -5,3 +5,4 @@ mapkey.key
 *.key
 Maps/*
 !Maps/
+Data/
