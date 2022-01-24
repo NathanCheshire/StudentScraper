@@ -449,7 +449,7 @@ def generateStudentsWhoMoved(databaseone, databasetwo):
     print(f"Calculations complete and saved")
 
 #generates list of students who switched majors between the provided databases
-def generateStudentsWhoSwitched(databaseone, databasetwo):
+def generateStudentsWhoSwitched(databaseone, databasetwo, excludeNulls = True):
     print(f'Comparing declared primary majors from semesters: {databaseone} and {databasetwo}')
 
     studentsFirstSem = getPandasFrameFromPGQuery(
@@ -480,10 +480,13 @@ def generateStudentsWhoSwitched(databaseone, databasetwo):
             #if net ids match and the netid is not already in the table
             if (firstNetID == secondNetID and firstNetID not in studentsWhoSwitchedNetIDs
                 and (firstMajor != secondMajor)):
+                    if (excludeNulls and (firstMajor == 'NULL' or secondMajor == 'NULL')):
+                        continue
+
                     studentsWhoSwitchedNetIDs.append(firstNetID)
                 
                     builtStr = (firstname + ' ' + lastname 
-                    + ' (' + firstNetID + ') switched from ' + firstMajor + ", to " + secondMajor)
+                    + ' (' + firstNetID + ') switched from ' + firstMajor + " to " + secondMajor)
 
                     switchLog.write(builtStr + "\n")
         
