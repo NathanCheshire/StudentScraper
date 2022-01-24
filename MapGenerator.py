@@ -391,9 +391,9 @@ def generateStreetViewImage(netid, save = True):
         im.save(saveName)
         print('Image saved as:', saveName)
 
-#names passed in need to be the db name of the semester
-def generateStudentsWhoSwitched(databaseone, databasetwo):
-    print(f'Comparing declared primary majors from semesters: {databaseone} and {databasetwo}')
+#generates list of students who have different addresses from the provided databases
+def generateStudentsWhoMoved(databaseone, databasetwo):
+    print(f'Comparing addresses from semesters: {databaseone} and {databasetwo}')
     print("Assumptions: students table exists in each database")
 
     studentsFirstSem = getPandasFrameFromPGQuery(
@@ -408,7 +408,7 @@ def generateStudentsWhoSwitched(databaseone, databasetwo):
 
     studentsWhoMovedNetIDs = []
 
-    addressLog = open('Data/StudentsMovedAddresses',"w+")
+    addressLog = open('Data/StudentsMovedAddresses.txt',"w+")
 
     for firstSemStudent in firstSemArr:
         firstNetID = firstSemStudent[0]
@@ -446,15 +446,50 @@ def generateStudentsWhoSwitched(databaseone, databasetwo):
         
     addressLog.close()
 
-    saveName = "Data/StudentsMovedNetids.csv"
-    f = open(saveName, "w+")
-    
-    #error here for no colum homestreet??
-    for netid in studentsWhoMovedNetIDs:
-       f.write(netid + '\n')
-        
-    f.close()
     print(f"Calculations complete and saved")
+
+#generates list of students who switched majors between the provided databases
+def generateStudentsWhoSwitched(databaseone, databasetwo):
+    print(f'Comparing declared primary majors from semesters: {databaseone} and {databasetwo}')
+
+    studentsFirstSem = getPandasFrameFromPGQuery(
+        'select netid, major, firstname, lastname from students', 
+    database = databaseone)
+    studentsSecondSem = getPandasFrameFromPGQuery(
+        'select netid, major from students', 
+    database = databasetwo)
+
+    firstSemArr = studentsFirstSem.values
+    secondSemArr = studentsSecondSem.values
+
+    #still here in case we need nedis for another query
+    studentsWhoSwitchedNetIDs = []
+
+    switchLog = open('Data/StudentsSwitched.txt',"w+")
+
+    for firstSemStudent in firstSemArr:
+        firstNetID = firstSemStudent[0]
+        firstMajor = firstSemStudent[1]
+        firstname = firstSemStudent[2]
+        lastname = firstSemStudent[3]
+
+        for secondSemStudent in secondSemArr:
+            secondNetID = secondSemStudent[0]
+            secondMajor = secondSemStudent[1]
+
+            #if net ids match and the netid is not already in the table
+            if (firstNetID == secondNetID and firstNetID not in studentsWhoSwitchedNetIDs
+                and (firstMajor != secondMajor)):
+                    studentsWhoSwitchedNetIDs.append(firstNetID)
+                
+                    builtStr = (firstname + ' ' + lastname 
+                    + ' (' + firstNetID + ') switched from ' + firstMajor + ", to " + secondMajor)
+
+                    switchLog.write(builtStr + "\n")
+        
+    switchLog.close()
+
+    print(f"Calculations complete and saved")    
 
 #returns the address for the netid for the current database
 def getAddressFromNetID(netid, database):
@@ -521,6 +556,7 @@ def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021',
 
 def main():
     #generateStreetViewImage('nvc29')
+    #generateStudentsWhoMoved('msu_fall_2021','msu_spring_2022')
     generateStudentsWhoSwitched('msu_fall_2021','msu_spring_2022')
 
 if __name__ == '__main__':
