@@ -557,10 +557,48 @@ def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021',
 
     return pd.read_sql_query(sqlQuery,con)
 
+def createMajorList(database = 'msu_spring_2022'):
+    query = '''select netid, email, firstname, lastname, major, 
+    class, homephone, homestreet, homecity, homestate, homezip,
+     homecountry from students where major like 'Civil Engineering';'''
+
+    df = getPandasFrameFromPGQuery(query, database = database)
+
+    arr = df.values
+
+    saveName = 'CivilEngineersSpring2022.csv'
+    log = open(('Data/' + saveName),"w+")
+    log.write('Format:\n')
+    log.write('netid,email,firstname,lastname,major,class,phonenumber,street,city,state,zip,country\n')
+
+    for i in range(0, len(arr)):
+        netid = str(arr[i][0])
+        email = str(arr[i][1])
+        firstname = str(arr[i][2])
+        lastname = str(arr[i][3])
+        major = str(arr[i][4])
+        classer = str(arr[i][5])
+        homephone = str(arr[i][6])
+        homestreet = str(arr[i][7])
+        homecity = str(arr[i][8])
+        homestate = str(arr[i][9])
+        homezip = str(arr[i][10])
+        homecountry = str(arr[i][11])
+       
+        log.write((netid + ',' + email + ',' 
+            + firstname + ',' + lastname + ',' + major + ',' 
+            + classer + ',' + homephone + ',' + homestreet + ',' 
+            + homecity + ',' + homestate + ',' + homezip + ',' + homecountry +'\n'))
+
+    log.close()
+        
+    print('Done, saved to Data as: ', saveName)
+
 def main():
-    #generateStreetViewImage('nvc29')
+    #generateStreetViewImage('cat624')
     #generateStudentsWhoMoved('msu_fall_2021','msu_spring_2022')
-    generateStudentsWhoSwitched('msu_fall_2021','msu_spring_2022')
+    #generateStudentsWhoSwitched('msu_fall_2021','msu_spring_2022')
+    createMajorList(database = 'msu_spring_2022')
 
 if __name__ == '__main__':
     main()
