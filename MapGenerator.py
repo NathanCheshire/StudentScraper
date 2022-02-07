@@ -557,16 +557,16 @@ def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021',
 
     return pd.read_sql_query(sqlQuery,con)
 
-def createMajorList(database = 'msu_spring_2022'):
+def createMajorList(majorLike, database = 'msu_spring_2022'):
     query = '''select netid, email, firstname, lastname, major, 
     class, homephone, homestreet, homecity, homestate, homezip,
-     homecountry from students where major like 'Civil Engineering';'''
+     homecountry from students where major like \'''' + majorLike + '''\';'''
 
     df = getPandasFrameFromPGQuery(query, database = database)
 
     arr = df.values
 
-    saveName = 'CivilEngineersSpring2022.csv'
+    saveName = str(majorLike) + '_' + str(database) + '.csv'
     log = open(('Data/' + saveName),"w+")
     log.write('Format:\n')
     log.write('netid,email,firstname,lastname,major,class,phonenumber,street,city,state,zip,country\n')
@@ -592,13 +592,13 @@ def createMajorList(database = 'msu_spring_2022'):
 
     log.close()
         
-    print('Done, saved to Data as: ', saveName)
+    print('Done, saved to Data/ as: ', saveName)
 
 def main():
     #generateStreetViewImage('cat624')
     #generateStudentsWhoMoved('msu_fall_2021','msu_spring_2022')
     #generateStudentsWhoSwitched('msu_fall_2021','msu_spring_2022')
-    createMajorList(database = 'msu_spring_2022')
+    createMajorList(majorLike = '%Engineering%', database = 'msu_spring_2022')
 
 if __name__ == '__main__':
     main()
