@@ -22,63 +22,85 @@ PATH = "chromedriver.exe"
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
 INJECTION_PASSWORD = open("logindata.txt").read().split(',')[1]
 
-#IDs to get past login page
-USERNAME_ID = "username"
-PASSWORD_ID = "password"
-BUTTON_ID = "btn btn-block btn-submit"
+# the list to loop through of what the lastname should contain
+lastnameContains = ['a','e','i','o','u','y']
 
-#timeouts
-PUSH_TIMEOUT = 30
-PAGE_SLEEP_TIMEOUT = 1
-QUERRY_SLEEP_TIMEOUT = 1
-
-vowels = ['a','e','i','o','u','y']
-
-#webscraping method directly using the backend API provided user is authenticated
 def apiMain(startVowel = 'a', startPage = '0', studentMode = True):
+    '''
+    Post requestor which sends a post request for each lastname contains 
+    in our contains list above and parses the results into the locally setup pg db.
+
+    This utilizes and exploits CAS, DUO, Banner, and just generally poor
+    security on MSU's end. Why the hell am I able to send 24,000 post requests in the matter
+    of 5 hours?
+
+    Note: see SQL/create_tables.sql for the table schemas and create statements.
+    '''
+
     print("Begining post sequence...")
+
+    # ensure the browser driver for selenium exists
     exe = os.path.exists(PATH)
 
     if exe:
         print("Executable found")
 
+        # get the cookies for the post request
         yummyCookies = getCookies()
 
-        #the fact that cookies don't timeout is insane like what are you doing state?
+        # the fact that cookies don't timeout is insane
+        # transfer cookies over to our session object
         session = requests.Session()
         for cookie in yummyCookies:
             session.cookies.set(cookie['name'], cookie['value'])
 
-        #loop through all last name contains a vowel
-        for vowelIndex in range(len(vowels)):
-            #start at starting vowel in case we're resuming the script after pausing it
-            if vowelIndex < vowels.index(startVowel):
+        # for all lastname contains
+        for containsIndex in range(len(lastnameContains)):
+            # skip ones we have already done
+            # (this script supports stopping and resuming at where you left off
+            # by passing an appropriate startVowel and startPage)
+            if containsIndex < lastnameContains.index(startVowel):
                 continue
 
+            # depending on the provided person, figure out what post request person type to send
             personType = 's' if studentMode else 'f'
 
-            #get the number of records there are with this search to construct our loops accordingly
-            formData = constructFormString(vowels[vowelIndex], '0', 'nvc29', personType)
+            # find out how many results were returned for this post 
+            # request so we know how many pages there are to loop through
+            formData = constructFormString(lastnameContains[containsIndex], '0', 'nvc29', personType)
             totalResultsRet = post(session, formData)
 
+            # inform of page we are parsing
             print('Attempting to parse for page number:',totalResultsRet)
+
+            # regex to parse the returned results to an int
             totalResults = int(re.sub("[^0-9]", "", totalResultsRet))
 
+            # find out how many pages were returned
             pages = math.ceil(totalResults / 10.0)
-            print(pages,'pages for last:', vowels[vowelIndex])
+            print(pages,'pages for last:', lastnameContains[containsIndex])
 
+            # if no results then simply continue
+            # this is after the above print statement so that the 
+            # user knows there were 0 records here
             if totalResults == 0:
                 continue  
 
+            # for all the pages found by this returned request
             for page in range(pages + 1):
-                #only skip pages if we're also on the start vowel
-                if vowels[vowelIndex] == startVowel and int(page) < int(startPage):
+                # skip past the pages we've already done for this vowel
+                if lastnameContains[containsIndex] == startVowel and int(page) < int(startPage):
                     continue
 
-                print("Page",page,"of",pages,"for last contains", vowels[vowelIndex])
-                parsePost(post(session, constructFormString(vowels[vowelIndex], str(page), 'nvc29', personType)), personType)
+                # inform of page we are on
+                print("Page", page, "of", pages, "for last contains", lastnameContains[containsIndex])
 
-                #reasonable timeout
+                # parse the post associated with the current page we should be on
+                parsePost(post(session, constructFormString(lastnameContains[containsIndex], 
+                            str(page), 'nvc29', personType)), personType)
+
+                # wait a little so that we're not spamming the MSU backend
+                # this isn't even necessary though. More good web security on their end, ggnore
                 time.sleep(0.25)
 
         print("Finished all last contains vowels, exiting scraper")
@@ -87,18 +109,38 @@ def apiMain(startVowel = 'a', startPage = '0', studentMode = True):
         print("Executable not found, download from: https://sites.google.com/chromium.org/driver/downloads?authuser=0")
 
 def constructFormString(lnameContains, page, netid, personType = 's'):
+    """
+    Returns a string for our form data POST request based on
+    what the last name should contain, the page number, our (you the script user) netid,
+    and the expected person type, e.g. 's' for student or 'f' for faculty.
+
+    Note: page numbers are deduced separately since we must know how many pages there are
+    in order to access them all.
+    """
+
     return ('{"searchType":"Advanced","netid":"' + netid + 
     '","field1":"lname","oper1":"contain","value1":"' + lnameContains +
     '","field2":"fname","oper2":"contain","value2":"' + "" +
     '","field3":"title","oper3":"contain","value3":"","rsCount":"' + str(page) + '","type":"' + personType + '"}')
 
-def getPostString():
-    return 'https://my.msstate.edu/web/home-community/main?p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'
+# the POST header
+POST_STRING = '''https://my.msstate.edu/web/home-community/main?
+                p_p_id=MSUDirectory1612_WAR_directory1612&p_p_lifecycle=
+                2&p_p_state=normal&p_p_mode=view&p_p_resource_id=getSearchXml&p_p_
+                cacheability=cacheLevelPage&p_p_col_id=column-2&p_p_col_pos=6&p_p_col_count=7'''
 
 def post(session, payload):
-    return session.post(getPostString(), data = dict(formData = payload)).text
+    '''
+    Sends a post request to the MSU student directory backend 
+    with the provided session (cookies too) and payload.
+    '''
 
-#tags for parsing people ##################################
+    return session.post(POST_STRING, data = dict(formData = payload)).text
+
+###########################################################
+'''
+Tags for parsing people from a returned POST request
+'''
 
 PERSON_TAG = 'person'
 LASTNAME_TAG = 'lastname'
@@ -112,6 +154,9 @@ STUDENT_ROLE_TAG = 'student'
 MAJOR_TAG = 'major'
 CLASS_TAG = 'class'
 
+PHONE_TAG = 'tel'
+ADDRESS_TAG = 'adr'
+
 ADDRESS_STREET_TAG = 'street1'
 ADDRESS_CITY_TAG = 'city'
 ADDRESS_STATE_TAG = 'state'
@@ -120,39 +165,54 @@ ADDRESS_COUNTRY_TAG = 'country'
 
 ###########################################################
 
-def parsePost(text, personType):
+def parsePost(postResponse, personType):
+    """
+    Parses the provided returned post string based on the person type given.
+    """
     if personType == 's':
-        parsePostStudent(text)
+        parsePostStudent(postResponse)
     elif personType == 'f':
-        parsePostFaculty(text)
+        parsePostFaculty(postResponse)
 
-def parsePostStudent(text):
-    #create soup of text
-    soup = BeautifulSoup(text, 'html.parser')
-    #get all person tags to sub parse for information
-    tag = soup.find_all(PERSON_TAG)
+def parsePostStudent(postResponse):
+    '''
+    Parses the provided post response as student data 
+    and inserts the found students into the local pg database.
+    '''
+    
+    # for all person tags found
+    for person in BeautifulSoup(postResponse, 'html.parser').find_all(PERSON_TAG):
 
-    for person in tag:
+        # master person soup
         personSoup = BeautifulSoup(str(person),'html.parser')
 
+        # get important data
         first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG)))
         last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG)))
-        picturePublic = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPUBLIC_TAG)))
-        picturePrivate = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPRIVATE_TAG)))
         email = re.compile(r'<.*?>').sub('', str(personSoup.find(EMAIL_TAG)))
 
+        # picture data for some reason
+        picturePublic = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPUBLIC_TAG)))
+        picturePrivate = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPRIVATE_TAG)))
+
+        # find student roles
         rolesTags = personSoup.find(ROLES_TAG)
         studentTags = BeautifulSoup(str(rolesTags),'html.parser').find(STUDENT_ROLE_TAG)
+
+        # find student's major and classification
         major = "NULL"
         class_ = "NULL"
+
         if studentTags != None:
             major = re.compile(r'<.*?>').sub('', str(studentTags.find(MAJOR_TAG)))
             class_ = re.compile(r'<.*?>').sub('', str(studentTags.find(CLASS_TAG)))
 
-        numbers = personSoup.find_all('tel')
+        # parse phone numbers, defaults are 0 since these are ints in our db
+        numbers = personSoup.find_all(PHONE_TAG)
         homePhone = 0
         officePhone = 0
         
+        # find proper numbers
         for number in numbers:
             if "permanent" in str(number):
                 homePhone = re.compile(r'<.*?>').sub('', str(number))
@@ -161,8 +221,10 @@ def parsePostStudent(text):
             else: #this is for faculty since their number is just listed as "Phone"
                 homePhone = re.compile(r'<.*?>').sub('', str(number))
 
-        addresses = personSoup.find_all('adr')
+        # find the addresses of the student
+        addresses = personSoup.find_all(ADDRESS_TAG)
 
+        # initialize home and office address data
         homeStreet = "NULL"
         homeCity = "NULL"
         homeState = "NULL"
@@ -175,6 +237,7 @@ def parsePostStudent(text):
         officeZip = "NULL"
         officeCountry = "NULL"
 
+        # for all the found addresses, parse the data
         for address in addresses:
             if "permanent" in str(address):
                 homeStreet = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_STREET_TAG)))
@@ -189,57 +252,76 @@ def parsePostStudent(text):
                 officeZip = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_ZIP_TAG)))
                 officeCountry = re.compile(r'<.*?>').sub('', str(personSoup.find(ADDRESS_COUNTRY_TAG)))
                 
+        # find person statistics 
         stat = personSoup.find_all("person")[0]
 
+        # primary and candidate key
         netid = stat['netid']
         pidm = stat['pidm']
+
+        # some random boleans
         selected = stat['selected']
         isStudent = stat['student']
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
+        # finally insert into our db with our parsed studetnt data
         insertPGStudents(netid, email, first, last, picturePublic, picturePrivate, major,class_, homePhone,officePhone,
                 pidm, selected, isStudent, isAffiliate, isRetired, homeStreet, homeCity, homeState, homeZip, homeCountry,
                 officeStreet, officeCity, officeState, officeZip, officeCountry)
 
-def parsePostFaculty(text):
-    soup = BeautifulSoup(text, 'html.parser')
-    #get all person tags to sub parse for information
-    tag = soup.find_all(PERSON_TAG)
+def parsePostFaculty(postResponse):
+    '''
+    Parses the provided post request return string as faculty 
+    objects to insert into the currently set pg database.
+    '''
 
-    for person in tag:
+    # for all person tags in this post request
+    for person in BeautifulSoup(postResponse, 'html.parser').find_all(PERSON_TAG):
+        # primary html soup to parse
         personSoup = BeautifulSoup(str(person),'html.parser')
 
+        # primary statistics html
         stat = personSoup.find_all("person")[0]
 
+        # parse key and candidate key
         netid = stat['netid']
         pidm = stat['pidm']
+
+        # some random booleans
         selected = stat['selected']
         isStudent = stat['student']
         isAffiliate = stat['affiliate']
         isRetired = stat['retired']
 
+        # picture data for some reason
         picturePublic = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPUBLIC_TAG)))
         picturePrivate = re.compile(r'<.*?>').sub('', str(personSoup.find(PICTUREPRIVATE_TAG)))
 
+        # parse name data
         first = re.compile(r'<.*?>').sub('', str(personSoup.find(FIRSTNAME_TAG))) 
         last = re.compile(r'<.*?>').sub('', str(personSoup.find(LASTNAME_TAG)))
         prefName = re.compile(r'<.*?>').sub('', str(personSoup.find('preferred')))
         namePrefix = re.compile(r'<.*?>').sub('', str(personSoup.find('prefix')))
 
-        officePhone = re.compile(r'<.*?>').sub('', str(personSoup.find('tel')))
+        # parse phone
+        officePhone = re.compile(r'<.*?>').sub('', str(personSoup.find(PHONE_TAG)))
 
-        #sometimes this is their netid @msstate.edu and sometimes
-        # it's their dep, I guess they choose their pref email
+        # parse email; interestingly, sometimes this is netid@msstate.edu
+        # and sometimes it's their name @depemail.edu
         email = re.compile(r'<.*?>').sub('', str(personSoup.find('email')))
 
+        # parse role html
         roleSoup = BeautifulSoup(str(personSoup.find('roles')), 'html.parser')
 
+        # parse role data
         orgn = re.compile(r'<.*?>').sub('', str(roleSoup.find('orgn'))).replace('&amp;',"&")
         title = re.compile(r'<.*?>').sub('', str(roleSoup.find('title'))).replace('&amp;',"&")
 
-        addressSoup = BeautifulSoup(str(personSoup.find('adr')), 'html.parser') 
+        # parse address html
+        addressSoup = BeautifulSoup(str(personSoup.find(ADDRESS_TAG)), 'html.parser') 
         
+        # parse address
         street1 = re.compile(r'<.*?>').sub('', str(addressSoup.find('street1')))
         street2 = re.compile(r'<.*?>').sub('', str(addressSoup.find('street2')))
         city = re.compile(r'<.*?>').sub('', str(addressSoup.find('city'))) 
@@ -247,7 +329,7 @@ def parsePostFaculty(text):
         zip = re.compile(r'<.*?>').sub('', str(addressSoup.find('zip'))) 
         country = re.compile(r'<.*?>').sub('', str(addressSoup.find('country')))
 
-        #null checks
+        # check for invalid data and insert NULL
         if first == None:
             first = "NULL"
         if last == None:
@@ -277,6 +359,7 @@ def parsePostFaculty(text):
         if country == None:
             country = "NULL"
 
+        # finally, after parsing and corrections, insert into the table
         insertPGFaculty(netid,pidm,selected,isStudent,isAffiliate,isRetired, picturePublic,
                 picturePrivate,first,last,prefName,namePrefix, officePhone, email, orgn, title,
                 street1,street2,city,state,zip,country)
@@ -286,55 +369,38 @@ def parsePostFaculty(text):
 # also ensure your table exists with the schema outlined in SQL/create_tables.sql
 DATABASE = 'msu_spring_2022'
 
-#inserts into the students table with the proper schema data
 def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
                 homePhone = 0,officePhone = 0, pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
                 homeStreet = "NULL",homeCity = "NULL",homeState = "NULL",homeZip = "NULL",homeCountry = "NULL",
                 officeStreet = "NULL",officeCity = "NULL",officeState = "NULL",officeZip = "NULL",officeCountry = "NULL"):
 
-    #try catch since duplicates will be skipped
+    '''
+    Inserts a new row into the students table in the 
+    currently set database with the provided information.
+    '''
+
+    # for all our local variables in scope, escape quotes
+    for local in locals():
+        local = local.replace("'","\'").replace('"','\"')
+
+    # duplicates throw an exception since we cannot insert with the same primary key
     try:
+        # create the connection to our local db
         con = psycopg2.connect(
-            host = "cypherlenovo", #beep boop machine name
-            database = DATABASE , #db name
-            user = 'postgres',
-            password = '1234',
-            port = '5433' #default port is 5432
+            host = "cypherlenovo", # your beep boop machine name
+            database = DATABASE , # your database name as set above. Ex: "msu_fall_2021"
+            user = 'postgres', # typical
+            password = '1234', # your password for your db
+            port = '5433' # default port is 5432 but whatever you set it to
         )
 
-        for local in locals():
-            local = local.replace("'","\'").replace('"','\"')
-
+        # create our cursor
         cur = con.cursor()
-
-        #todo test case for if this worked: pma107
-        #todo add this for faculty
-        #todo make sure tables are correct after that
-        #todo add netidnum column
-        #todo use mapquestapi to get lat/lon table for students
         
-        netid = netid.replace("'",'').replace('"','')
-        email = email.replace("'",'').replace('"','')
-        first = first.replace("'",'').replace('"','')
-        last = last.replace("'",'').replace('"','')
-        picturePublic = picturePublic.replace("'",'').replace('"','')
-        picturePrivate = picturePrivate.replace("'",'').replace('"','')
-        class_ = class_.replace("'",'').replace('"','')
-        selected = selected.replace("'",'').replace('"','')
-        isStudent = isStudent.replace("'",'').replace('"','')
-        isAffiliate = isAffiliate.replace("'",'').replace('"','')
-        isRetired = isRetired.replace("'",'').replace('"','')
-        homeStreet = homeStreet.replace("'",'').replace('"','')
-        homeCity = homeCity.replace("'",'').replace('"','')
-        homeState = homeState.replace("'",'').replace('"','')
-        homeZip = homeZip.replace("'",'').replace('"','')
-        homeCountry = homeCountry.replace("'",'').replace('"','')
-        officeStreet = officeStreet.replace("'",'').replace('"','')
-        officeCity = officeCity.replace("'",'').replace('"','')
-        officeState = officeState.replace("'",'').replace('"','')
-        officeZip = officeZip.replace("'",'').replace('"','')
-        officeCountry = officeCountry.replace("'",'').replace('"','')
+        # note: replacing all ' and " here with nothing used to be performed
+        # but due to the locals() loop above, is no longer needed
 
+        # build the insert command we are going to execute
         command = """INSERT INTO students (netid,email,firstname,lastname,
         picturepublic,pictureprivate,major,class,homephone,officephone,pidm,
         selected,isstudent,isaffiliate,isretired,homestreet,homecity,homestate,
@@ -346,105 +412,149 @@ def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",pictureP
         pidm,selected,isStudent,isAffiliate,isRetired,homeStreet,homeCity,homeState,
         homeZip,homeCountry,officeStreet,officeCity,officeState,officeZip,officeCountry)
 
-        print('Executing',command)
+        # inform user of the command to execute
+        print('Executing', command)
+
+        # execute and commit if successful
         cur.execute(command)
         con.commit()
 
-        #avoid memory leaks
+        # avoid memory leaks
         cur.close()
         con.close()
     except Exception as e:
+        # typically this simply means that the user was already in the table
         print(e)
         pass
 
 def insertPGFaculty(netid,pidm,selected,isStudent,isAffiliate,isRetired, picturePublic,
                 picturePrivate,firstname,lastname,prefName,namePrefix, officePhone, email, orgn, title,
                 street1,street2,city,state,zip,country):
-    #try catch since duplicates will be skipped
+    '''
+    Create a new row in the faculty table and
+    inserts a faculty object with the provided data.
+    '''
+
+     # escape any possible quotes
+    for local in locals():
+        local = local.replace("'","\'").replace('"','\"')
+
     try:
+        # create a connection for our local db
         con = psycopg2.connect(
-            host = "cypherlenovo", #beep boop machine name
-            database = DATABASE , #db name
-            user = 'postgres',
-            password = '1234',
-            port = '5433' #default port is 5432
+            host = "cypherlenovo", # your beep boop machine name
+            database = DATABASE , # local db name as defined above
+            user = 'postgres', # default
+            password = '1234', # your pg admin password
+            port = '5433' # your pg port
         )
 
-        #escape any possible quotes
-        for local in locals():
-            local = local.replace("'","\'").replace('"','\"')
-
+        # create a cursor to execute our statement
         cur = con.cursor()
+
+        # create the insert command
         command = """INSERT INTO faculty (netid,pidm,selected,isstudent,isaffiliate,
-                    isretired,picturepublic,pictureprivate,firstname,lastname,prefname,
-                    nameprefix,officephone,email,orgn,title,street1,street2,
-                    city,state,zip,country)VALUES ('{0}','{1}','{2}','{3}','{4}','{5}',
-                    '{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}',
-                    '{16}','{17}','{18}','{19}','{20}','{21}')""".format(netid,pidm,selected,isStudent
-                    ,isAffiliate,isRetired, picturePublic,picturePrivate,firstname,lastname,prefName,
-                    namePrefix, officePhone, email, orgn, title,street1,street2,city,state,zip,country)
-        print('Executing',command)
+        isretired,picturepublic,pictureprivate,firstname,lastname,prefname,
+        nameprefix,officephone,email,orgn,title,street1,street2,
+        city,state,zip,country)VALUES ('{0}','{1}','{2}','{3}','{4}','{5}',
+        '{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}',
+        '{16}','{17}','{18}','{19}','{20}','{21}')""".format(netid,pidm,selected,isStudent
+        ,isAffiliate,isRetired, picturePublic,picturePrivate,firstname,lastname,prefName,
+        namePrefix, officePhone, email, orgn, title,street1,street2,city,state,zip,country)
+
+        # inform the user of the insert command
+
+        # execute and commit if successful
+        print('Executing', command)
         cur.execute(command)
         con.commit()
 
-        #avoid memory leaks
+        # avoid memory leaks
         cur.close()
         con.close()
     except Exception as e:
+        # usually this means the faculty was already in the table
         print(e)
         pass
 
+#############################################################
+'''
+Cookie acquiring
+'''
+
+# element names for getting cookies from DUO
+USERNAME_ID = "username"
+PASSWORD_ID = "password"
+BUTTON_ID = "btn btn-block btn-submit"
+
+# timeouts used
+PUSH_TIMEOUT = 30
+
 def getCookies():
+    """
+    Acquires cookies which last at least 24 hours
+    (CAS cookies for MSU banner don't expire sometimes, suck it CAS)
+    """
+
     print("Getting 24 hour cookies...")
+
+    # make sure the selenium driver exists
     exe = os.path.exists(PATH)
 
     if exe:
+        # get the chrome driver (as a user you may 
+        # need to change this per our browser and selenium usage)
         option = webdriver.ChromeOptions()
 
-        #don't open chrome window
+        # no need to open the chrome window
         option.add_argument('headless')
         driver = webdriver.Chrome(options = option)
         
+        # go to url
         driver.get("https://my.msstate.edu/")
 
-        elem = driver.find_element(By.ID,USERNAME_ID)
+        # navigate to username field and inject username
+        elem = driver.find_element(By.ID, USERNAME_ID)
         elem.clear()
         elem.send_keys(INJECTION_NAME)
 
+        # navigate to password field and inject password
         elem = driver.find_element(By.ID, PASSWORD_ID)
         elem.clear()
         elem.send_keys(INJECTION_PASSWORD)
 
+        # find and click submit button
         driver.find_element(By.NAME,'submit').click()
 
-        #Wait for Duo to load
+        # wait for Duo to load
         masterDuoID = "login"
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, masterDuoID)))
         print(f"DUO {masterDuoID} loaded")
 
-        #switch to duo iFrame, this took me like 3 hours to figure out kek
+        # switch to duo iFrame (this took me like 3 hours to figure out kek)
         iFrameTitle = "duo_iframe"
         driver.switch_to.frame(iFrameTitle)
 
-        #click remember me for 24 hours
+        # click "remember me for 24 hours"
         twentyFourHours = "dampen_choice"
         WebDriverWait(driver, PUSH_TIMEOUT).until(
             EC.presence_of_element_located((By.NAME, twentyFourHours))).click()
 
-        #wait for push button to load and click it
+        # wait for push button to load and click it
         pushButtontext = "Send Me a Push"
         WebDriverWait(driver, PUSH_TIMEOUT).until(
             EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{pushButtontext}')]"))).click()
         print("Push sent")
 
-        #wait for directory to load to confirm we're authenticated
+        # wait for user to accept duo push and for the subsequent 
+        # directory to load to confirm we were properly authenticated
         directoryID = "portlet_MSUDirectory1612_WAR_directory1612"
         WebDriverWait(driver, 40).until(
             EC.presence_of_element_located((By.ID, directoryID)))
         print("Authentication complete")
         
-        #copy over cookies from duo authentication
+        # copy over the delicious cookies from duo authentication, oh so yummy
         yummyCookies = driver.get_cookies()
 
         return yummyCookies
