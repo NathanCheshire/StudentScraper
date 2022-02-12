@@ -321,25 +321,38 @@ def generateStateMap():
     folium.LayerControl().add_to(stateMap)
     stateMap.save('Maps/StudentsByState.html')
 
-#generates a map using folium and openrouteservice to connect two netid addresses via
-# a driveable route
 def pathFromNetidToNetid(netid1, netid2, database = 'msu_fall_2021'):
-    print('Generating path from',netid1,"to",netid2,"...")
+    '''
+    Generates a map using OpenRouteService to connect two 
+    netids together via a driveable path.
+    '''
 
+    # inform user of actions
+    print('Generating path from', netid1, "to", netid2, "...")
+
+    # execute query
     df = getPandasFrameFromPGQuery('''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
-                              students.homezip, students.homecountry
+                              students.homezip, students.homecountry, students.major, students.class
                               from student_home_addresses
                               inner join students on student_home_addresses.netid = students.netid
                               where students.netid in (\'''' + netid1 + "\',\'" + netid2 + "\');", database = database)
 
-    m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
+
+    # get center point for the map
+    lat1 = arr[0][0]
+    lon1 = arr[0][1]
+    lat2 = arr[1][0]
+    lon2 = arr[1][1]
+
+    # start map center inbetween student coords
+    m = folium.Map(location=[float(lat1) + float(lat2), float(lon1) + float(lon2)], zoom_start = 4)
 
     coordinates = []
 
-    #add red waypoints to map
+    # add student waypoints to map
     for i in range(0, len(arr)):
         lat = arr[i][0]
         lon = arr[i][1]
@@ -351,16 +364,20 @@ def pathFromNetidToNetid(netid1, netid2, database = 'msu_fall_2021'):
         street = arr[i][7]
         zip = arr[i][8]
         country = arr[i][9]
+        major = arr[i][10]
+        classification = arr[i][11]
 
         coordinates.append([float(lon), float(lat)])
 
+        # create styled string to use for popup
         html = f'''
-        <h1>{firstname} {lastname}, {netid}</h1>
+        <h1>{firstname} {lastname}, {netid}<br/>{major}, {classification}</h1>
         <p>
         {street}<br/>{city}, {state}, {zip}<br/>{country}
         </p>
         '''
-        
+
+        # create the popup and map
         iframe = folium.IFrame(html)
         popup = folium.Popup(iframe, min_width = 250, max_width = 250)
 
@@ -371,62 +388,87 @@ def pathFromNetidToNetid(netid1, netid2, database = 'msu_fall_2021'):
             icon = folium.Icon(color='darkred') #maroon makes sense ig
         ).add_to(m)
 
+    # get ORS key and figure out coordinates to navigate to
     client = ors.Client(key = open("Keys/mapkey.key").read())
     route = client.directions(coordinates = coordinates, profile = 'driving-car', format = 'geojson')
+
+    # add data to map
     folium.GeoJson(route, name = ('Path from ' + str(netid1) + " to " + str(netid2))).add_to(m)
 
+    # output and save map
     saveName = 'Maps/StudentPathMap_' + str(netid1) + "_To_" + str(netid2) + '.html'
     m.save(saveName)
-    print('Map Generated and saved as',saveName)
+    print('Map Generated and saved as', saveName)
 
-#generates a google maps link for the provided street,city,state,zip,country combo
 def generateGoogleMapsLink(street = '400 S. Monroe St.', city = 'Tallahassee', 
         state = 'FL', zip = '32399-0001', country = 'United States'):
+    '''
+    Generates a google maps link for the provided address
+    '''
+
     specificQuery = (street.replace(' ', '%20') + '%20' + city.replace(' ', '%20') + '%20' + 
         state.replace(' ', '%20') + '%20' + zip.replace(' ', '%20') + '%20' + country.replace(' ', '%20'))
+    return (GOOGLE_MAPS_HEADER + specificQuery)
 
-    rawQuery = 'https://www.google.com/maps/search/?api=1&query='
-
-    return (rawQuery + specificQuery)
+################################################3
+'''
+General constants
+'''
+GOOGLE_MAPS_HEADER = 'https://www.google.com/maps/search/?api=1&query='
 
 MSU_HEART_LAT = 33.453516040681706
 MSU_HEART_LON = -88.78947571055713
 EARTH_RADIUS = 6373.0
 
-#calculates the average distance from each student to the heart of MSU (the drill field center)
 def calculateAverageDistanceToState(database = 'msu_fall_2021'):
+    '''
+    Calculates the average distance from each student to the heart of MSU (the drill field)
+    '''
+
     print('Calculating average distance from home to MSU...')
 
-    df = getPandasFrameFromPGQuery('''select student_home_addresses.lat, student_home_addresses.lon
-                              from student_home_addresses;''')
+    # get necessary data
+    df = getPandasFrameFromPGQuery('''SELECT student_home_addresses.lat, student_home_addresses.lon
+                              FROM student_home_addresses;''')
     arr = df.values
     
     distanceSum = 0.0
     numVals = 0
 
+    # loop through coordinates
     for i in range(len(arr)):
         lat = radians(arr[i][0])
         lon = radians(arr[i][1])
 
+        # get dist away for current student
         dlat = radians(MSU_HEART_LAT) - lat
         dlon = radians(MSU_HEART_LON) - lon
 
+        # calculate math to determine distnace student is from MSU
         a = sin(dlat / 2)**2 + cos(lat) * cos(radians(MSU_HEART_LAT)) * sin(dlon / 2)**2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
+        # add to running total
         distanceSum = distanceSum + EARTH_RADIUS * c
         numVals = numVals + 1
 
     averageDistanceKM = distanceSum / float(numVals)
-    print('Average distance is', '%.3f' % averageDistanceKM,'kilometers')
-    print('Average distance is', '%.3f' % (averageDistanceKM * 0.62137),'miles')
 
-#generates and saves a street view image of the address associated with the provided netid
+    # print average distance in metric and english units
+    print('Average distance is', '%.3f' % averageDistanceKM,'km')
+    print('Average distance is', '%.3f' % (averageDistanceKM * 0.62137),'mi')
+
 def generateStreetViewImage(netid, save = True):
-    query = '''select homestreet, homecity, homestate, homezip, homecountry 
-               from students 
-               where netid =\'''' + netid + '\';'
+    '''
+    Generates a google maps street view image of
+     the address associated with the provided netid.
+    '''
 
+    query = '''SELECT homestreet, homecity, homestate, homezip, homecountry 
+               FROM students 
+               WHERE netid =\'''' + netid + '\';'
+
+    # extract data
     arr = getPandasFrameFromPGQuery(query).values
     
     street = arr[0][0]
@@ -435,13 +477,16 @@ def generateStreetViewImage(netid, save = True):
     zip = arr[0][3]
     country = arr[0][4]
 
+    # generate query per google maps standard
     specificQuery = (street.replace(' ', '%20') + '%20' + city.replace(' ', '%20') + '%20' + 
         state.replace(' ', '%20') + '%20' + zip.replace(' ', '%20') + '%20' + country.replace(' ', '%20'))
 
     maxSize = 640;
 
+    # get google maps api key
     key = open("Keys/googlemaps.key").read()
 
+    # create the request string and pull image
     base = ('https://maps.googleapis.com/maps/api/streetview?location=' + specificQuery +
              '&size=' + str(maxSize) + 'x' + str(maxSize) + '&key=' + key)
 
@@ -449,18 +494,25 @@ def generateStreetViewImage(netid, save = True):
     im.show()
 
     if save:
+        # save image if requested to do so
         saveName = 'Figures/' + str(netid) + "_StreetView" + ".png"  
         im.save(saveName)
         print('Image saved as:', saveName)
 
-#generates list of students who have different addresses from the provided databases
 def generateStudentsWhoMoved(databaseone, databasetwo):
-    print(f'Comparing addresses from semesters: {databaseone} and {databasetwo}')
-    print("Assumptions: students table exists in each database")
+    '''
+    Generates a list of students who have
+    different addresses between the two semesters.
+    '''
 
+    print(f'Comparing addresses from semesters: {databaseone} and {databasetwo}')
+    print("Assumptions: students table with schema outlined in SQL/create_tables.sql exists in each database")
+
+    # get entire databases of relavent data
     studentsFirstSem = getPandasFrameFromPGQuery(
         'select netid, homestreet, homecity, homestate, homezip, homecountry from students', 
     database = databaseone)
+
     studentsSecondSem = getPandasFrameFromPGQuery(
         'select netid, homestreet, homecity, homestate, homezip, homecountry home from students', 
     database = databasetwo)
@@ -468,10 +520,16 @@ def generateStudentsWhoMoved(databaseone, databasetwo):
     firstSemArr = studentsFirstSem.values
     secondSemArr = studentsSecondSem.values
 
+    # used to keep track of students already in db
     studentsWhoMovedNetIDs = []
 
-    addressLog = open('Data/StudentsMovedAddresses.txt',"w+")
+    # init log
+    saveName = f'Data/StudentsWhoMoved_{databaseone}_{databasetwo}.txt'
+    addressLog = open(saveName, "w+")
 
+    # todo this complexity is O(n^2) and is not optimal at all
+    # we should convert this to a self-join so that there's only one pass through
+    # reduces time by 26,000^(26,000 - 1) which is simply insane
     for firstSemStudent in firstSemArr:
         firstNetID = firstSemStudent[0]
         firstStreet = firstSemStudent[1]
@@ -497,26 +555,29 @@ def generateStudentsWhoMoved(databaseone, databasetwo):
                      firstCountry != secondCountry)):
                 studentsWhoMovedNetIDs.append(firstNetID)
 
-                #check for null/empty values
-                
                 builtStr = (firstNetID + ' moved from: ' + firstStreet + ' ' 
                 + firstCity + ' ' + firstState + ' ' + firstZip + ' ' 
-                + firstCountry + ' to ' + secondStreet + ' ' + secondCity + ' ' 
+                + firstCountry + ' to: ' + secondStreet + ' ' + secondCity + ' ' 
                 + secondState + ' ' + secondZip + ' ' + secondCountry)
 
+                # write  to file
                 addressLog.write(builtStr + "\n")
-        
+    
+    # close and inform user
     addressLog.close()
+    print(f"Calculations complete and saved as {saveName}")
 
-    print(f"Calculations complete and saved")
-
-#generates list of students who switched majors between the provided databases
 def generateStudentsWhoSwitched(databaseone, databasetwo, excludeNulls = True):
+    '''
+    Generates a list of students who switched majors between the provided databases.
+    '''
+
     print(f'Comparing declared primary majors from semesters: {databaseone} and {databasetwo}')
 
     studentsFirstSem = getPandasFrameFromPGQuery(
         'select netid, major, firstname, lastname from students', 
     database = databaseone)
+    
     studentsSecondSem = getPandasFrameFromPGQuery(
         'select netid, major from students', 
     database = databasetwo)
@@ -524,11 +585,13 @@ def generateStudentsWhoSwitched(databaseone, databasetwo, excludeNulls = True):
     firstSemArr = studentsFirstSem.values
     secondSemArr = studentsSecondSem.values
 
-    #still here in case we need nedis for another query
+    # used to determine what students are not already in the list
     studentsWhoSwitchedNetIDs = []
 
-    switchLog = open('Data/StudentsSwitched.txt',"w+")
+    saveName = f'Data/StudentsSwitched_{databaseone}_{databasetwo}.txt'
+    switchLog = open(saveName,"w+")
 
+    # TODO look into a self-join here too
     for firstSemStudent in firstSemArr:
         firstNetID = firstSemStudent[0]
         firstMajor = firstSemStudent[1]
@@ -554,10 +617,14 @@ def generateStudentsWhoSwitched(databaseone, databasetwo, excludeNulls = True):
         
     switchLog.close()
 
-    print(f"Calculations complete and saved")    
+    # inform of save
+    print(f"Calculations complete and saved as {saveName}")    
 
-#returns the address for the netid for the current database
 def getAddressFromNetID(netid, database):
+    '''
+    Returns an address string associated with the provided netid.
+    '''
+
     query = ('''select homestreet, homecity, homestate, homezip, homecountry 
                from ''' + database + ''' where netid =\'''' + netid + '\';')
 
@@ -572,12 +639,19 @@ def getAddressFromNetID(netid, database):
 
     return (street + ' ' + city + ' ' + state + ' ' + zip + ' ' + country);
 
-#converts all whitspace of length 1 or greater to %20 to be used in a url
 def parseSpacesForURL(string):
+    '''
+    Converts all whitespace of length one or greater to a %20 to be used in a URL.
+    '''
+
     return re.sub('[\s]+','%20', string)
 
 #outputs a list of other students from the passed netid's city,state combo
 def listStudentsInCityStateByNetid(netid, database = 'msu_fall_2021'):
+    '''
+    Outputs a list of students from the provided netid's home city and state.
+    '''
+
     print(f'Finding students from {netid}\'s home town')
 
     query = ('''select firstname, lastname, netid, major, class, homephone, homestreet 
@@ -585,15 +659,22 @@ def listStudentsInCityStateByNetid(netid, database = 'msu_fall_2021'):
                             where homestate = (select homestate from students where netid = \'''' + netid + '''\') 
                             and homecity = (select homecity from students where netid = \'''' + netid + '''\') 
                             order by class, major''')
+    # generate and execute query
     
     saveName = 'Data/Students_From_' + netid + '_Town.csv'
     getPandasFrameFromPGQuery(query, database = database).to_csv(saveName)  
+
+    # save as a csv
     print(f'File saved as {saveName}')
 
-#outputs a list of other students from the passed netid's city,state combo
 def listStudentsInCityState(city, state, database = 'msu_fall_2021'):
+    '''
+    Generates a list of students from the provided netid's home state.
+    '''
+
     print(f'Finding students from {city}, {state}')
 
+    # generate and execute query
     query = '''select firstname, lastname, netid, major, class, homephone, homestreet 
                             from students 
                             where homestate = \'''' + state + '''\' 
@@ -601,14 +682,19 @@ def listStudentsInCityState(city, state, database = 'msu_fall_2021'):
                             order by class, major'''
     
     saveName = 'Data/Students_From_' + city + "_" + state + '.csv'
-    getPandasFrameFromPGQuery(query, database = database).to_csv(saveName)  
+    getPandasFrameFromPGQuery(query, database = database).to_csv(saveName) 
+
+    # inform completed and saved 
     print(f'File saved as {saveName}')
 
-#returns a pandas data frame resulting from executing the provided 
-# sql query on the built connection using the provided credentials
 def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021', 
         host = 'cypherlenovo', user = 'postgres', password = '1234', port = '5433'):
+    '''
+    Returns a pandas data from from the provided sql query to postgres based on
+    the provided credentials which are used to establish a connection.
+    '''
 
+    # establish connection
     con = psycopg2.connect(
         host = host,
         database = database,
@@ -620,19 +706,28 @@ def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021',
     return pd.read_sql_query(sqlQuery,con)
 
 def createMajorList(majorLike, database = 'msu_spring_2022'):
+    '''
+    Creates a list of students and the data most clients 
+    request that have the provided declared major.
+    '''
+
+    # generate and execute query
     query = '''select netid, email, firstname, lastname, major, 
     class, homephone, homestreet, homecity, homestate, homezip,
      homecountry from students where major like \'%''' + majorLike + '''%\';'''
 
     df = getPandasFrameFromPGQuery(query, database = database)
-
     arr = df.values
 
+    # create save name and file
     saveName = str(majorLike) + '_' + str(database) + '.csv'
     log = open(('Data/' + saveName),"w+")
+
+    # write header data
     log.write('Format:\n')
     log.write('netid,email,firstname,lastname,major,class,phonenumber,street,city,state,zip,country\n')
 
+    # loop through query, extract information, write line
     for i in range(0, len(arr)):
         netid = str(arr[i][0])
         email = str(arr[i][1])
@@ -652,12 +747,15 @@ def createMajorList(majorLike, database = 'msu_spring_2022'):
             + classer + ',' + homephone + ',' + homestreet + ',' 
             + homecity + ',' + homestate + ',' + homezip + ',' + homecountry +'\n'))
 
+    # close and inform where the data is
     log.close()
-        
     print('Done, saved to Data/ as: ', saveName)
 
 if __name__ == '__main__':
     # the main place functions are called is from here
     # currently we're generating lists of people by major for clients ;)
-    createStateLabelMap('LA', database='msu_fall_2021')
+
+    #createStateLabelMap('LA', database='msu_fall_2021')
     #createMajorList(majorLike = 'Engineering', database = 'msu_spring_2022')
+    
+    pass
