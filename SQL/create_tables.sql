@@ -28,3 +28,29 @@ CREATE TABLE students
   officezip character varying,
   officecountry character varying
 );
+
+CREATE TABLE faculty
+( netid character varying NOT NULL,
+  PRIMARY KEY (netid),
+  pidm character varying,
+  selected character varying,
+  isstudent character varying,
+  isaffiliate character varying,
+  isretired character varying,
+  picturepublic character varying,
+  pictureprivate character varying,
+  firstname character varying,
+  lastname character varying,
+  prefname character varying,
+  nameprefix character varying,
+  officephone character varying,
+  email character varying,
+  orgn character varying,
+  title character varying,
+  street1 character varying,
+  street2 character varying,
+  city character varying,
+  state character varying,
+  zip character varying,
+  country character varying,
+);

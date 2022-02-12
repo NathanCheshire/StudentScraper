@@ -14,10 +14,11 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait 
 
-#relative path to exe
+# relative path to exe
 PATH = "chromedriver.exe"
 
-#your account details, I'm storing them inside of a file that is ignored by git for security reasons :P
+# relative path to this script, create a logindata.txt file
+# and insert your username and password in the following format: "username,password"
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
 INJECTION_PASSWORD = open("logindata.txt").read().split(',')[1]
 
@@ -280,6 +281,11 @@ def parsePostFaculty(text):
                 picturePrivate,first,last,prefName,namePrefix, officePhone, email, orgn, title,
                 street1,street2,city,state,zip,country)
 
+# the database to use, change this to the
+# name of your database when using a new one
+# also ensure your table exists with the schema outlined in SQL/create_tables.sql
+DATABASE = 'msu_spring_2022'
+
 #inserts into the students table with the proper schema data
 def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",picturePublic = "NULL",picturePrivate = "NULL",major = "NULL",class_ = "NULL",
                 homePhone = 0,officePhone = 0, pidm = "NULL",selected = "NULL",isStudent = "NULL",isAffiliate = "NULL", isRetired = "NULL",
@@ -443,7 +449,6 @@ def getCookies():
 
         return yummyCookies
 
-DATABASE = 'msu_spring_2022'
-
+# start off poster and select person type
 if __name__ == "__main__":
     apiMain(studentMode = True)
