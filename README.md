@@ -5,9 +5,9 @@ Student Scraper is a web scraping tool that uses Python and Selenium to scrape s
 
 logindata.txt should exist in the top level directory and contain your netid and password in the following format: `netid,password`.
 
-## Method 1: WebCrawling via WebCrawler.py
+## Method 1: WebCrawling via StudentCrawler.py
 
-This method will simply search through all permutations of first,last containing aa aa, aa ab,...,zz zz, until all student records have been collected and saved to text files. This was my first approach to this problem and is quite inefficient so I would not recommend using `WebCrawler.py`. This section did, however, teach me a lot about selenium, webscraping, and webcrawling. I was able to figure out how to pass both authentication pages using selenium via this approach.
+This method will simply search through all permutations of first,last containing aa aa, aa ab,...,zz zz, until all student records have been collected and saved to text files. This was my first approach to this problem and is quite inefficient so I would not recommend using `StudentCrawler.py`. This section did, however, teach me a lot about selenium, webscraping, and webcrawling. I was able to figure out how to pass both authentication pages using selenium via this approach.
 
 ## Method 2: POST requests via Poster.py
 
