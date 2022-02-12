@@ -13,32 +13,37 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait 
 
-#relative path to exe
+# relative path to selenium driver exe
 PATH = "chromedriver.exe"
 
-#your account details, I'm storing them inside of a file that is ignored by git for security reasons :P
+# your msu netid and password stored in the following format: "netid,password"
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
 INJECTION_PASSWORD = open("logindata.txt").read().split(',')[1]
 
-#IDs to get past login page
+# element ids for duo
 USERNAME_ID = "username"
 PASSWORD_ID = "password"
 BUTTON_ID = "btn btn-block btn-submit"
 
-#timeouts
+# timeouts
 PUSH_TIMEOUT = 30
 PAGE_SLEEP_TIMEOUT = 1
 QUERRY_SLEEP_TIMEOUT = 1
 
-#contains permutation slices
+# permutations for the firstname to contain
 alphas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 
                 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 
                 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
+# the filename to output the results to
 firstFileName = ""
 
-#basic webscraping technique using front-end interaction
-def nathanMain():
+def crawl():
+    """
+    Webscrapes from the MSU student directory using selenium to find 
+    all students in the database and save their information to a file.
+    """
+
     try:
         print("Begining scraping sequence")
         exe = os.path.exists(PATH)
@@ -175,15 +180,21 @@ def nathanMain():
         print("Exception:", e)
 
 def count_files(in_directory):
+    '''
+    Counts the files contained in the provided directory
+    '''
+
     joiner= (in_directory + os.path.sep).__add__
     return sum(
         os.path.isfile(filename)
         for filename
         in map(joiner, os.listdir(in_directory))
     )
-
-#gets and logs the given person's details
 def printPersonDetails(driver, person, personName):
+    '''
+    Finds person details from the provided person html.
+    '''
+
     classification = "NULL"
     major = "NULL"
 
@@ -214,16 +225,21 @@ def printPersonDetails(driver, person, personName):
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located ((By.ID, 'back'))).send_keys(Keys.ENTER)
 
-#checks if an html element exists and is loaded by the current driver
 def elementExists(driver, id):
+    '''
+    Returns whether the provided id exists within the driver.
+    '''
     try:
         driver.find_element(By.ID, id)
     except:
         return False
     return True
 
-#parses the html returned by the webcrawler
 def parseHTML(studentDetails, name, classification, major):
+    '''
+    Parses the html and found details from the student html.
+    '''
+
     #user attributes
     studentName = name
     studentEmail = "NULL"
@@ -312,12 +328,18 @@ def parseHTML(studentDetails, name, classification, major):
     file_object.write("\n")
     file_object.close()
 
-#removes nonascii chars from a string
 def parseNonAscii(text):
+    '''
+    Removes any non-ascii characters from a string
+    '''
     return re.sub(r'[^\x00-\x7F]+',' ', text)
 
-#generates pairs from aa to zz, starts from the given value if it isn't aa
 def generatePairsList(startFrom = 'aa'):
+    '''
+    Generates pairs of double letters from aa, ab, ac,
+    ... , zy, zz starting from the provided value.
+    '''
+
     ret = []
 
     startI = alphas.index(startFrom[0])
@@ -328,13 +350,18 @@ def generatePairsList(startFrom = 'aa'):
             ret.append(alphas[i] + alphas[j])
 
     return ret
-
-#removes duplicate lines from the given file and outputs a new file
+    
 def removeDuplicateLines(filename):
+    """
+    Removes any duplicate lines from the provided file and
+     ouputs a new file with the duplicates removed.
+    """
+
     try:
         if os.path.exists(filename):
             linesSeen = []
-            newFilename = os.path.dirname(os.path.realpath(filename)) + "/" + os.path.basename(filename).split(".")[0] + '_Non_Duplicates.txt'
+            newFilename = (os.path.dirname(os.path.realpath(filename))
+             + "/" + os.path.basename(filename).split(".")[0] + '_Non_Duplicates.txt')
             newFileWriter = open(newFilename, "w+")
 
             with open(filename) as f:
@@ -351,5 +378,6 @@ def removeDuplicateLines(filename):
     except:
         pass
 
+# start crawling
 if __name__ == "__main__":
-    nathanMain()
+    crawl()
