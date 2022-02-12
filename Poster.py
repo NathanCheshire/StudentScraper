@@ -463,9 +463,9 @@ def insertPGFaculty(netid,pidm,selected,isStudent,isAffiliate,isRetired, picture
         namePrefix, officePhone, email, orgn, title,street1,street2,city,state,zip,country)
 
         # inform the user of the insert command
-
-        # execute and commit if successful
         print('Executing', command)
+        
+        # execute and commit if successful
         cur.execute(command)
         con.commit()
 
