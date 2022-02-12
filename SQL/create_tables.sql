@@ -1,5 +1,4 @@
 --this is the schema for students, simply create this in your db and link the appropriate credentials to pg
-
 CREATE TABLE students
 ( netid character varying NOT NULL,
   PRIMARY KEY (netid),
@@ -29,6 +28,7 @@ CREATE TABLE students
   officecountry character varying
 );
 
+--the schema for faculty
 CREATE TABLE faculty
 ( netid character varying NOT NULL,
   PRIMARY KEY (netid),
@@ -53,4 +53,12 @@ CREATE TABLE faculty
   state character varying,
   zip character varying,
   country character varying,
+);
+
+-- the schema for both home_addresses and office_addresses, simply change the name accordingly
+CREATE TABLE home_addresses
+( netid character varying NOT NULL,
+  PRIMARY KEY (netid),
+  lat double precision,
+  lon double precision,
 );
