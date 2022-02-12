@@ -12,41 +12,62 @@ import re
 # AE -> Armed Forces Europe
 # AP -> Armed Forces Pacific
 # DC -> District of Columbia
+
+# list of state abbreviations within our MSU database
+# these were acquired via the following query:
+# SELECT distinct homestate FROM students
 states = [ 'AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA',
            'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME',
            'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM',
            'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX',
            'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
 
-#generates a static image based off of a lat/lon input
 def generateStaticImage(lat, lon, width, height, save = False, saveNameParam = "NULL"):
+    '''
+    Generates a static map quest aerial view of the provided lat,lon coordinate
+    '''
+
+    # extract our key
     key = open("Keys/geokey.key").read()
     
+    # build the request string
     baseString = ('http://www.mapquestapi.com/staticmap/v5/map?' 
     + 'key=' + str(key) + '&type=map&size=' + str(width) + ',' 
     + str(height) + '&locations=' + str(lat) + ',' + str(lon) 
     + '%7Cmarker-sm-50318A-1&scalebar=true&zoom=15&rand=286585877')
 
+    # get the image and show
     im = Image.open(requests.get(baseString, stream=True).raw)
     im.show()
 
+    # save the image if told to
     if save:
         saveName = 'Figures/' + str(lat) + "-" + str(lon) + ".png"  
 
+        # if we were given a specific name to use, use it
         if saveNameParam != 'NULL':
             saveName = 'Figures/' + saveNameParam + ".png"
             
+        # save and inform of success
         im.save(saveName)
         print('Image saved as:',saveName)
 
-#the party trick: generates a static 'google maps' like view of a student's house given their netid
 def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 1000, database = 'msu_fall_2021'):
-    df = getPandasFrameFromPGQuery(f'select lat,lon from student_home_addresses where netid = \'{netid}\'', database = database)
+    '''
+    Generates a static image of a student's address based on their netid.
+    '''
+
+    # get pandas df and get lat and lon
+    df = getPandasFrameFromPGQuery(
+        (f'SELECT lat,lon FROM student_home_addresses WHERE netid = \'{netid}\''), database = database)
     arr = df.values
     lat = arr[0][0]
     lon = arr[0][1]
 
-    df = getPandasFrameFromPGQuery(f'select homestreet, homecity, homestate, homezip, homecountry from students where netid = \'{netid}\'', database = database)
+    # get information for image name
+    df = getPandasFrameFromPGQuery(
+        (f'SELECT homestreet, homecity, homestate, homezip, homecountry FROM students WHERE netid = \'{netid}\''), 
+        database = database)
     arr = df.values
     street = arr[0][0] 
     city = arr[0][1]
@@ -54,51 +75,71 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
     zip = arr[0][3]
     country = arr[0][4]
 
+    # if no address
     if street == 'NULL':
         print('NetID address not found in local db, dammit Michael.')
         return
 
+    # generate and save image
     saveName = str(street) + " " + str(city) + " " + str(state) + " " + str(zip) + " " + str(country)
     generateStaticImage(lat, lon, width, height, save, saveNameParam = saveName)
 
 #the main one: generates a heap map from all lat/lon pairs in our student_home_addresses table for students
-def createUsaHeatmap(database = 'msu_fall_2021'):
+def createUsaHeatmap(table = 'student_home_addresses', database = 'msu_fall_2021'):
+    '''
+    Creates a heat map based on all the lat, lon pairs within the provided database and table.
+    '''
+
     print('Generating heatmap based on home addresses')
 
-    df = getPandasFrameFromPGQuery('select lat,lon from student_home_addresses', database = database)
+    # get lat and lon from table
+    df = getPandasFrameFromPGQuery(f'SELECT lat,lon FROM {table}', database = database)
     df = df[['lat','lon']]
     
+    # get all rows
     df.head()
 
+    # initialize to starkville center point
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
-    m.add_child(plugins.HeatMap(arr, radius = 15))
-    m.save("Maps/StudentHeat.html")
 
-    print('Heatmap generated and saved as StudentHeat.html')
+    # add all the values for the coordinates
+    m.add_child(plugins.HeatMap(arr, radius = 15))
+
+    # save map specific to provided data
+    saveName = f"Maps/{table}_{database}_Heatmap.html"
+    m.save(saveName)
+    print(f'Heatmap generated and saved as {saveName}')
 
 #creates a waypoint map of all students from the specified state
 def createStateLabelMap(stateID, database = 'msu_fall_2021'):
+    '''
+    Creates a way point map of all students in the provided state.
+    '''
+
+    # ifi the state is invalid
     if stateID not in states:
         print('Not a valid StateID, the following are valid stateIDs:')
         print(states)
         return
 
-    print('Generating map with waypoints at addresses with firstname, lastname, and netid for state',stateID)
+    print('Generating map with waypoints at addresses for state',stateID)
 
-    query = '''select student_home_addresses.lat, student_home_addresses.lon, 
+    # create query to get relvanet data
+    query = '''SELECT student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
-                              students.homezip, students.homecountry
+                              students.homezip, students.homecountry, students.major, students.class
                               from student_home_addresses
                               inner join students on student_home_addresses.netid = students.netid
                               where students.homestate = ''' + f'\'{stateID}\';'
 
+    # execute query and init folium map
     df = getPandasFrameFromPGQuery(query, database = database)
-
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
 
+    # create way points and popup data
     for i in range(0, len(arr)):
         lat = arr[i][0]
         lon = arr[i][1]
@@ -110,9 +151,11 @@ def createStateLabelMap(stateID, database = 'msu_fall_2021'):
         street = arr[i][7]
         zip = arr[i][8]
         country = arr[i][9]
+        major = arr[i][10]
+        classification = arr[i][11]
 
         html = f'''
-        <h1>{firstname} {lastname}, {netid}</h1>
+        <h1>{firstname} {lastname}, {netid}<br/>{major}, {classification}</h1>
         <p>
         {street}<br/>{city}, {state}, {zip}<br/>{country}
         </p>
@@ -121,6 +164,7 @@ def createStateLabelMap(stateID, database = 'msu_fall_2021'):
         iframe = folium.IFrame(html)
         popup = folium.Popup(iframe, min_width = 250, max_width = 250)
 
+        # create marker and add to map
         folium.Marker(
             location=[lat, lon],
             popup = popup,
@@ -128,27 +172,34 @@ def createStateLabelMap(stateID, database = 'msu_fall_2021'):
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
+    # create and save map
     saveName = 'Maps/StudentNameMap_' + str(stateID) + '_State.html'
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
-#generates a folium map with waypoints representing each student, you can limit the number of waypoints since 
-# folium sucks at rendering tons of waypoints for some reason even though it uses leaflet.js
 def createWorldLabeledMap(waypoints = 500, database = 'msu_fall_2021'):
-    print('Generating map with waypoints at addresses with firstname, lastname, and netid')
+    '''
+    Generates a folium map for the number of specified waypoints from the provided database.
+    Folium sucks at rendering lots of waypoints for some reason although I believe this is a problem
+    with leafletjs which Folium wraps.
+    '''
 
+    print(f'Generating map with {waypoints} waypoints')
+
+    # create query and execute
     query = '''select student_home_addresses.lat, student_home_addresses.lon, 
                               students.netid, students.firstname, students.lastname,
                               students.homecity, students.homestate, students.homestreet,
-                              students.homezip, students.homecountry
+                              students.homezip, students.homecountry, students.major, students.class
                               from student_home_addresses
                               inner join students on student_home_addresses.netid = students.netid'''
-
     df = getPandasFrameFromPGQuery(query, database = database)
 
+    # init map at center of starkville and get values
     m = folium.Map(location=[33.4504,-88.8184], zoom_start = 4)
     arr = df.values
 
+    # pass 0 to do all waypoints in the db, usually a bad idea
     if waypoints == 0:
         waypoints = len(arr)
 
@@ -163,14 +214,18 @@ def createWorldLabeledMap(waypoints = 500, database = 'msu_fall_2021'):
         street = arr[i][7]
         zip = arr[i][8]
         country = arr[i][9]
+        major = arr[i][10]
+        classification = arr[i][11]
 
+        # add data to html styled popup
         html = f'''
-        <h1>{firstname} {lastname}, {netid}</h1>
+        <h1>{firstname} {lastname}, {netid}<br/>{major},{classification}</h1>
         <p>
         {street}<br/>{city}, {state}, {zip}<br/>{country}
         </p>
         '''
         
+        # create waypoint marker and add to map
         iframe = folium.IFrame(html)
         popup = folium.Popup(iframe, min_width = 250, max_width = 250)
 
@@ -181,71 +236,77 @@ def createWorldLabeledMap(waypoints = 500, database = 'msu_fall_2021'):
             icon = folium.Icon(color='darkred')
         ).add_to(m)
 
+    # create show and save waypoint
     saveName = 'Maps/StudentNameMap_' + str(waypoints) + '_Waypoints.html'
     m.save(saveName)
     print('Map Generated and saved as',saveName)
 
-#generates a csv representing the number of students from MSU by state
-def generateStudentByStateCSV(database = 'msu_fall_2021'):
-    print('Generating csv data for students by home state')
+def generateStudentByStateNormalizedCSV(database = 'msu_fall_2021'):
+    '''
+    Generates a CSV of the percentage of students who attend MSU by state.
+    '''
 
-    f = open('Data/StudentsByStateNormalized.csv','w+')
+    saveName = 'Data/StudentsByStateNormalized.csv'
+
+    # open and write header information
+    print('Generating csv data for students by home state')
+    f = open(saveName,'w+')
     f.write('State,StudentCount\n')
 
-    #get total number to normalilze our data
-    total = 0
-    
+    # figure out the total number of students
+    query = '''SELECT count(*) 
+                FROM students;'''
+
+    # add to total from our current query
+    df = getPandasFrameFromPGQuery(query, database = database)
+    arr = df.values
+
+    total = arr[0][0]
+
+    # for all states in our db
     for stateAbrev in states:
-        if stateAbrev != "DC":
-            query = '''select count(homestate) 
-                       from students 
-                       where homestate = \'''' + stateAbrev + "\';"
+        # get number of students from that state
+        query = '''SELECT count(homestate) 
+                   FROM students 
+                   WHERE homestate = \'''' + stateAbrev + "\';"
+        df = getPandasFrameFromPGQuery(query, database = database)
+        arr = df.values
 
-            df = getPandasFrameFromPGQuery(query, database = database)
-            arr = df.values
-            total = total + arr[0][0]
-
-    for stateAbrev in states:
-        if stateAbrev != "DC":
-            query = '''select count(homestate) 
-                       from students 
-                       where homestate = \'''' + stateAbrev + "\';"
-
-            df = getPandasFrameFromPGQuery(query, database = database)
-            arr = df.values
-            f.write(stateAbrev + "," + str(float(arr[0][0]) / float(total)) + "\n")
+        # save with state abrev to our file
+        f.write(stateAbrev + "," + str(float(arr[0][0]) / float(total)) + "\n")
     
-    print('CSV generated')
+    print(f'CSV generated and saved as {saveName}')
 
 # checks all the state abreviations within the student table
 def checkStateAbreviations(database = 'msu_fall_2021'):
-    query = '''select distinct homestate 
-               from students 
-               where homestate != 'NULL' and homestate != 'None';'''
+    '''
+    Checks and validates all state abreviations found in the provided database.
+    '''
+
+    query = '''SELECT distinct homestate 
+               FROM students 
+               WHERE homestate != 'NULL' and homestate != 'None';'''
 
     df = getPandasFrameFromPGQuery(query, database = database)
     arr = df.values
     
     for i in range(len(arr)):
         if arr[i][0].upper() not in states:
-            print(arr[i][0],"is not a valid state abreviation")
+            # output the ones not in the valid list defined above
+            print(arr[i][0], "is not a valid state abreviation")
 
-def validateStateAbr(abrev):
-    return abrev in states and abrev != 'DC'
-
-#generates a map representing the students of MSU by state
 def generateStateMap():
+    '''
+    Generates a map showing students by state as a USA State color map.
+    '''
     stateMap = folium.Map(location=[40, -95], zoom_start=4)
 
-    url = (
-        "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
-    )
-    state_geo = f"{url}/us-states.json"
+    # assuming this CSV has been generated using a function contained in this file
+    state_data = pd.read_csv('Data/StudentsByState.csv')
 
-    state_data = pd.read_csv('Data/StudentsByStateNoMS.csv')
-
+    # create map from student data using us-state.json for state boundary data
     folium.Choropleth(
-        geo_data = state_geo,
+        geo_data = 'us-states.json',
         name = "Students by home state",
         data = state_data,
         columns = ["State", "StudentCount"],
@@ -256,8 +317,9 @@ def generateStateMap():
         legend_name="% Of Students by State",
     ).add_to(stateMap)
 
+    # finalize and save map
     folium.LayerControl().add_to(stateMap)
-    stateMap.save('Maps/StudentsByStateNoMS.html')
+    stateMap.save('Maps/StudentsByState.html')
 
 #generates a map using folium and openrouteservice to connect two netid addresses via
 # a driveable route
@@ -560,7 +622,7 @@ def getPandasFrameFromPGQuery(sqlQuery, database = 'msu_fall_2021',
 def createMajorList(majorLike, database = 'msu_spring_2022'):
     query = '''select netid, email, firstname, lastname, major, 
     class, homephone, homestreet, homecity, homestate, homezip,
-     homecountry from students where major like \'''' + majorLike + '''\';'''
+     homecountry from students where major like \'%''' + majorLike + '''%\';'''
 
     df = getPandasFrameFromPGQuery(query, database = database)
 
@@ -594,11 +656,8 @@ def createMajorList(majorLike, database = 'msu_spring_2022'):
         
     print('Done, saved to Data/ as: ', saveName)
 
-def main():
-    #generateStreetViewImage('cat624')
-    #generateStudentsWhoMoved('msu_fall_2021','msu_spring_2022')
-    #generateStudentsWhoSwitched('msu_fall_2021','msu_spring_2022')
-    createMajorList(majorLike = '%Engineering%', database = 'msu_spring_2022')
-
 if __name__ == '__main__':
-    main()
+    # the main place functions are called is from here
+    # currently we're generating lists of people by major for clients ;)
+    createStateLabelMap('LA', database='msu_fall_2021')
+    #createMajorList(majorLike = 'Engineering', database = 'msu_spring_2022')
