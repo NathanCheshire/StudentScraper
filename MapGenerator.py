@@ -52,14 +52,15 @@ def generateStaticImage(lat, lon, width, height, save = False, saveNameParam = "
         im.save(saveName)
         print('Image saved as:',saveName)
 
-def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 1000, database = 'msu_fall_2021'):
+def generateStaticImageFromNetid(netid, save = False, width = 1000, 
+height = 1000, database = 'msu_fall_2021'):
     '''
     Generates a static image of a student's address based on their netid.
     '''
 
     # get pandas df and get lat and lon
     df = getPandasFrameFromPGQuery(
-        (f'SELECT lat,lon FROM student_home_addresses WHERE netid = \'{netid}\''), database = database)
+        (f'SELECT lat,lon FROM students WHERE netid = \'{netid}\''), database = database)
     arr = df.values
     lat = arr[0][0]
     lon = arr[0][1]
@@ -84,10 +85,10 @@ def generateStaticImageFromNetid(netid, save = False, width = 1000, height = 100
     saveName = str(street) + " " + str(city) + " " + str(state) + " " + str(zip) + " " + str(country)
     generateStaticImage(lat, lon, width, height, save, saveNameParam = saveName)
 
-#the main one: generates a heap map from all lat/lon pairs in our student_home_addresses table for students
-def createUsaHeatmap(table = 'student_home_addresses', database = 'msu_fall_2021'):
+def createHeatMap(table = 'student_home_addresses', database = 'msu_fall_2021'):
     '''
-    Creates a heat map based on all the lat, lon pairs within the provided database and table.
+    Creates a heat map based on all the lat, lon 
+    pairs within the provided database and table.
     '''
 
     print('Generating heatmap based on home addresses')
@@ -755,7 +756,9 @@ if __name__ == '__main__':
     # the main place functions are called is from here
     # currently we're generating lists of people by major for clients ;)
 
-    #createStateLabelMap('LA', database='msu_fall_2021')
     #createMajorList(majorLike = 'Engineering', database = 'msu_spring_2022')
     
+    for stateAbrev in states:
+        createStateLabelMap(stateAbrev, database = 'msu_fall_2021')
+
     pass
