@@ -13,9 +13,10 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.chrome.service import Service
 
 # relative path to exe
-PATH = "chromedriver.exe"
+PATH = "Drivers/chrome_98_driver.exe"
 
 # relative path to this script, create a logindata.txt file
 # and insert your username and password in the following format: "username,password"
@@ -380,6 +381,7 @@ def insertPGStudents(netid, email = "NULL",first = "NULL",last = "NULL",pictureP
     '''
 
     # for all our local variables in scope, escape quotes
+    # don't declare any variables in scope before this
     for local in locals():
         local = local.replace("'","\'").replace('"','\"')
 
@@ -487,6 +489,10 @@ USERNAME_ID = "username"
 PASSWORD_ID = "password"
 BUTTON_ID = "btn btn-block btn-submit"
 
+DRIVER_ARGS = ['headless']
+
+STATE_URL = 'https://my.msstate.edu/'
+
 # timeouts used
 PUSH_TIMEOUT = 30
 
@@ -506,12 +512,14 @@ def getCookies():
         # need to change this per our browser and selenium usage)
         option = webdriver.ChromeOptions()
 
-        # no need to open the chrome window
-        option.add_argument('headless')
-        driver = webdriver.Chrome(options = option)
+        for arg in DRIVER_ARGS:
+            option.add_argument(arg)
+
+        driver = webdriver.Chrome(options = option, 
+        service = Service(PATH))
         
         # go to url
-        driver.get("https://my.msstate.edu/")
+        driver.get(STATE_URL)
 
         # navigate to username field and inject username
         elem = driver.find_element(By.ID, USERNAME_ID)
@@ -524,7 +532,7 @@ def getCookies():
         elem.send_keys(INJECTION_PASSWORD)
 
         # find and click submit button
-        driver.find_element(By.NAME,'submit').click()
+        driver.find_element(By.NAME, 'submit').click()
 
         # wait for Duo to load
         masterDuoID = "login"

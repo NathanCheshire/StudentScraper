@@ -305,9 +305,9 @@ def generateStateMap():
     # assuming this CSV has been generated using a function contained in this file
     state_data = pd.read_csv('Data/StudentsByState.csv')
 
-    # create map from student data using us-state.json for state boundary data
+    # create map from student data using us-states.json for state boundary data
     folium.Choropleth(
-        geo_data = 'us-states.json',
+        geo_data = 'json/us-states.json',
         name = "Students by home state",
         data = state_data,
         columns = ["State", "StudentCount"],
@@ -315,7 +315,7 @@ def generateStateMap():
         fill_color = "OrRd",
         fill_opacity = 0.7,
         line_opacity = 0.1,
-        legend_name="% Of Students by State",
+        legend_name="Number of Students by State",
     ).add_to(stateMap)
 
     # finalize and save map
@@ -757,8 +757,5 @@ if __name__ == '__main__':
     # currently we're generating lists of people by major for clients ;)
 
     #createMajorList(majorLike = 'Engineering', database = 'msu_spring_2022')
-    
-    for stateAbrev in states:
-        createStateLabelMap(stateAbrev, database = 'msu_fall_2021')
 
     pass

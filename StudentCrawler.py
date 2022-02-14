@@ -12,9 +12,10 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.chrome.service import Service
 
 # relative path to selenium driver exe
-PATH = "chromedriver.exe"
+PATH = "Drivers/chrome_98_driver.exe"
 
 # your msu netid and password stored in the following format: "netid,password"
 INJECTION_NAME = open("logindata.txt").read().split(',')[0]
@@ -53,7 +54,7 @@ def crawl(studentMode = True):
             print("Executable found")
 
             # create driver object based on seleium exe
-            driver = webdriver.Chrome()
+            driver = webdriver.Chrome(service = Service(PATH))
             driver.get("https://my.msstate.edu/")
 
             # find the CAS username field and input our username
