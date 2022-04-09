@@ -9,7 +9,7 @@ For this stack make sure you can execute python scripts and have Docker Desktop 
 
 After the Postgres intance is up and running in a Docker container and you have ensured the database and table were created successfully, place your username and password for MyState inside of `Keys/state.key` in the format: `netid,password`. This will be used with selenium to send a DUO push to obtain cookies which will allow the sending of mass POST requests.
 
-Lastly, assuming everything else is setup, you may invoke `python Poster.py` which will begin the POST sequence and insertions into the Postgres database.
+Lastly, assuming everything else is setup, you may invoke `python Poster.py` which will begin the POST sequence and insertions into the Postgres database. I'd recommend you activate the virtual environment via `.\venv\Scripts\Activate.bat` before running the Poster script.
 
 ## Method 1: WebCrawling via StudentCrawler.py
 
@@ -21,7 +21,7 @@ Directly accessing the backend and sending post requests to acquire data is a mu
 
 ## StudentQueries.sql
 
-This is mostly a scratch pad for me for testing and debugging purposes.
+This is mostly a scratch pad for my testing and debugging purposes.
 
 ## Data/
 
