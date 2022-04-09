@@ -444,7 +444,7 @@ def insertPGFaculty(netid,pidm,selected,isStudent,isAffiliate,isRetired, picture
     try:
         # create a connection for our local db
         con = psycopg2.connect(
-            host = "cypherlenovo", # your beep boop machine name
+            host = "localhost", # your beep boop machine name
             database = DATABASE , # local db name as defined above
             user = 'postgres', # default
             password = '1234', # your pg admin password
