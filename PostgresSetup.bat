@@ -25,15 +25,18 @@ ECHO Timing out for 10s to allow database to startup
 :: this is a hack but it works :P
 ping 127.0.0.1 -n 11 > nul
 
-set db_name=MSU_%semester%_%yy%
+set db_name=msu_%semester%_%yy%
 ECHO Creating database with name %db_name%
 
 docker exec -it student-scraper-postgres psql -U postgres -c "CREATE DATABASE %db_name%;"
 
-ECHO Ensure that the databse name listed above exists in the list below
+ECHO Creating tables using python connection
 
-docker exec -it student-scraper-postgres psql -U postgres -c "\list"
+python .\CreateTables.py
+
+ECHO Contents of the students table of the %db_name% database
+docker exec -it student-scraper-postgres psql -U postgres -c "\d+ students"
 
 :EOF_SUCCESS
-ECHO Completed pg db and table setup, proceed to Postger.py
+ECHO Completed pg db and table setup, proceed to Poster.py
 EXIT
