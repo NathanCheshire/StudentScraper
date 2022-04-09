@@ -1,5 +1,8 @@
+# MapQuestAPI.py used to convert addresses to (lat, lon) pairs.
 
-
+import argparse
+import sys
+from numpy import require
 import psycopg2
 import requests
 import json
@@ -60,7 +63,7 @@ def calculate_coordinates(startFrom = 0, database = 'msu_fall_2021',
     # for all the found addresses
     for addressInd in range(len(addresses)):
         # skip ones we were told to skip
-        if addressInd < startFrom:
+        if startFrom is not None and addressInd < startFrom:
             continue
 
         # get current address
@@ -145,11 +148,24 @@ def get_request(key, location):
     return requests.get(MAPQUEST_HEADER, params = {
         "key" : key,
         "location" : location
-    })
+    }) 
+
+# valid args
+START_FROM = '--start-from'
+DATABASE = '--database'
+TABLE = '--table'
 
 if __name__ == "__main__":
-    """
-    Spin off the map quest API script to find convert valid addresses 
-    to lat, lon pairs.
-    """
-    calculate_coordinates(startFrom = 0, database = 'msu_spring_2022', table = 'home_addresses')
+    parser = argparse.ArgumentParser(prog='MapQuest',description='Turns the valid addreseses' + \
+        ' in the provided table into lat, lon pairs and inserts them back into the table',
+        usage=f'Usage: MapQuestion.py [{START_FROM} INTEGER] [{DATABASE} String] [{TABLE} string]',
+        epilog='By Nate Cheshire')
+
+    parser.add_argument(START_FROM, type=int, help="the index to start from")
+    parser.add_argument(DATABASE, required=True, type=str, help='the pg database name')
+    parser.add_argument(TABLE, required=True, type=str, help='the table name')
+
+    args = vars(parser.parse_args())
+
+    calculate_coordinates(startFrom = args['start_from'], 
+                database = args['database'], table = args['table'])

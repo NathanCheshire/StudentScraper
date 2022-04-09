@@ -21,9 +21,9 @@ Assuming you have created a Posgres database on your local machine with the same
 
 Data holds the CSVs I generated from `MapGenerator.py` which are subsequently utilized for a USA state-by-state HTML Folium output depicting the percentage of students from each of the 50 states.
 
-## MapQuestAPI.py
+## MapQuest.py
 
-This script is what I used to query the MapQuest api and convert all of the student addresses within my postgres local db to lat,lon pairs. Resultingly, this opens a plethora of possible data visualizations. Both the home address and office address for each valid user was converted to lat, lon pairs which are stored in their respective tables: home_addresses, office_addresses. This schemas include the netid as the PK, as well as a double for both the lat and lon.
+This script is what I used to query the MapQuest API and convert all of the student addresses within my postgres local db to lat,lon pairs. Resultingly, this opens a plethora of possible data visualizations. Both the home address and office address for each valid user were converted to lat, lon pairs which are stored in their respective tables: home_addresses, office_addresses. This schemas include the netid as the PK, as well as a double for both the lat and lon.
 
 ## MapGenerator.py
 
@@ -47,7 +47,7 @@ By calling `pathFromNetidToNetid()` and passing in two netids, I can produce the
 
 ## Example 3 - Generalized Visualization
 
-Utilizing all of the lat,lon pairs outputed via the `MapQuestAPI.py` script, I used Follium to generate a heatmap of all students who had public addresses that attended MSU during the Fall 2021 semester. The Visualization for this can be seen at the following link: 
+Utilizing all of the lat,lon pairs outputed via the `MapQuest.py` script, I used Follium to generate a heatmap of all students who had public addresses that attended MSU during the Fall 2021 semester. The Visualization for this can be seen at the following link: 
 <b>https://nathancheshire.github.io/StudentHeatFall2021<b/>
 
 ## Example 4 - StreetView Visualizations
