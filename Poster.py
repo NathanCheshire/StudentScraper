@@ -18,10 +18,8 @@ from selenium.webdriver.chrome.service import Service
 # relative path to exe
 PATH = "Drivers/chrome_98_driver.exe"
 
-# relative path to this script, create a logindata.txt file
-# and insert your username and password in the following format: "username,password"
-INJECTION_NAME = open("logindata.txt").read().split(',')[0]
-INJECTION_PASSWORD = open("logindata.txt").read().split(',')[1]
+INJECTION_NAME = open("Keys/state.key").read().split(',')[0]
+INJECTION_PASSWORD = open("Keys/state.key").read().split(',')[1]
 
 # the list to loop through of what the lastname should contain
 lastnameContains = ['a','e','i','o','u','y']

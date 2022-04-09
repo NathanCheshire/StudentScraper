@@ -18,8 +18,8 @@ from selenium.webdriver.chrome.service import Service
 PATH = "Drivers/chrome_98_driver.exe"
 
 # your msu netid and password stored in the following format: "netid,password"
-INJECTION_NAME = open("logindata.txt").read().split(',')[0]
-INJECTION_PASSWORD = open("logindata.txt").read().split(',')[1]
+INJECTION_NAME = open("Keys/state.key").read().split(',')[0]
+INJECTION_PASSWORD = open("Keys/state.key").read().split(',')[1]
 
 # element ids for duo
 USERNAME_ID = "username"

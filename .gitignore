@@ -1,8 +1,6 @@
-logindata.txt
 **/__pycache__/
-geokey.key
-mapkey.key
 *.key
 Maps/*
 !Maps/
 Data/*
+venv/*

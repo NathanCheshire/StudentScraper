@@ -1,9 +1,15 @@
 # StudentScraper 
 ## By Nathan Cheshire
 
-Student Scraper is a web scraping tool that uses Python and Selenium to scrape student details from MSU's myState directory.
+Student Scraper is a web scraping tool that uses Python and Selenium to scrape student details from MSU's student directory.
 
-logindata.txt should exist in the top level directory and contain your netid and password in the following format: `netid,password`.
+## Setup
+
+For this stack make sure you can execute python scripts and have Docker Desktop installed. We're going to use Docker for the Postgres instance and python for general purpose scripting. Additionally, I have provided a `PostgresSetup.bat` which will do all the work of setting up Postgres and creating the appropriate database and table.
+
+After the Postgres intance is up and running in a Docker container and you have ensured the database and table were created successfully, place your username and password for MyState inside of `Keys/state.key` in the format: `netid,password`. This will be used with selenium to send a DUO push to obtain cookies which will allow the sending of mass POST requests.
+
+Lastly, assuming everything else is setup, you may invoke `python Poster.py` which will begin the POST sequence and insertions into the Postgres database.
 
 ## Method 1: WebCrawling via StudentCrawler.py
 
@@ -15,7 +21,7 @@ Directly accessing the backend and sending post requests to acquire data is a mu
 
 ## StudentQueries.sql
 
-Assuming you have created a Posgres database on your local machine with the same schema I outlined inside of `create_tables.sql` you should have success executing any of the queries inside of `StudentQueries.sql`. This is mostly a scratch pad for me for testing and debugging purposes. I did, however, make it public for educational purposes only ;)
+This is mostly a scratch pad for me for testing and debugging purposes.
 
 ## Data/
 
@@ -23,33 +29,27 @@ Data holds the CSVs I generated from `MapGenerator.py` which are subsequently ut
 
 ## MapQuest.py
 
-This script is what I used to query the MapQuest API and convert all of the student addresses within my postgres local db to lat,lon pairs. Resultingly, this opens a plethora of possible data visualizations. Both the home address and office address for each valid user were converted to lat, lon pairs which are stored in their respective tables: home_addresses, office_addresses. This schemas include the netid as the PK, as well as a double for both the lat and lon.
+This script is what I used to query the MapQuest API and convert all of the student addresses within my postgres local db to lat,lon pairs. Resultingly, this opens a plethora of possible data visualizations. Both the home address for each valid user were converted to lat, lon pairs which are stored in the same students table.
 
 ## MapGenerator.py
 
 This is the main data visualization script file. It contains methods such as getting an aerial view of a student's home based soley on their netid, producing a heat map of all students at MSU, and even state by state visualizations for statitistics such as enrollment by state (as one would expect it's extremely biased towards MS since as of 12-8-21, 71.73% of students at MSU have a home address within Mississippi. This stat can be seen in `Data/StudentsByStateNormalized.csv`).
 
-## Example
-
-By calling `generateStaticImageFromNetid()` and passing in a netid such as `wvb26`, I can produce the following figure within seconds. I find this an exceptionally cool party trick (if you're into parties and all that).
+## Examples
 
 ## Figure 1 - Aerial Address Generation soley from netid
 
 <img src="https://i.imgur.com/mS6MiE7.png" data-canonical-src="https://i.imgur.com/mS6MiE7.png" width = 400px height = 400px/>
 
-## Example 2
-
-By calling `pathFromNetidToNetid()` and passing in two netids, I can produce the following figure depicting the addresses of the two students as well as a path from point to point navigatable by common roads. These waypoints also include exact student information such as full name, netid, and an html formatted address.
-
-## Figure 2 - Route from netid to netid
+## Figure 2 - Route from netid alpha to netid beta
 
 <img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png" width = 400px height = 400px/>
 
-## Example 3 - Generalized Visualization
+## Figure 3 - Heatmap
 
 Utilizing all of the lat,lon pairs outputed via the `MapQuest.py` script, I used Follium to generate a heatmap of all students who had public addresses that attended MSU during the Fall 2021 semester. The Visualization for this can be seen at the following link: 
 <b>https://nathancheshire.github.io/StudentHeatFall2021<b/>
 
-## Example 4 - StreetView Visualizations
+## Figure 4 - StreetView Visualizations
 
-As can be seen in `MapGenerator.py`, a method exists called `generateStreetViewImage()`. Using this method, which simply takes a netid, I can produce a figure showing the student a picture of their house as if I was standing outside. Not creepy at all I swear, it's for research purposes!
+As can be seen in `MapGenerator.py`, a method exists called `generateStreetViewImage()`. Using this method, which simply takes a netid, I can produce a figure showing the student a picture of their house as if I was standing outside. In testing this works for upwards of 70% I estimate for all students; a number I find acceptable. I plan to make a backend for this program which can be access via a Cyder account
