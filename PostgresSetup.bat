@@ -14,16 +14,25 @@ if %mm% LSS 08 (set semester=spring) else (set semester=fall)
 ECHO Pulling postgres docker image
 docker pull postgres
 
-ECHO Creating volume for scraper
+ECHO Creating volume
 docker volume create student-scraper-postgres
 
 ECHO Running container and binding to port 5432
-docker run -d --name=student-scraper-postgres -p 5432:5432 \
-        -v postgres-volume:/var/lib/postgresql/data -e POSTGRES_PASSWORD=1234 postgres
+docker run -d --name=student-scraper-postgres -p 5432:5432 -v postgres-volume:/var/lib/postgresql/data -e POSTGRES_PASSWORD=1234 postgres
+
+ECHO Timing out for 10s to allow database to startup
+
+:: this is a hack but it works :P
+ping 127.0.0.1 -n 11 > nul
 
 set db_name=MSU_%semester%_%yy%
 ECHO Creating database with name %db_name%
-docker exec -it student-scraper-postgres bash -c "psql -U postgres ; CREATE DATABASE juneblues;"
+
+docker exec -it student-scraper-postgres psql -U postgres -c "CREATE DATABASE %db_name%;"
+
+ECHO Ensure that the databse name listed above exists in the list below
+
+docker exec -it student-scraper-postgres psql -U postgres -c "\list"
 
 :EOF_SUCCESS
 ECHO Completed pg db and table setup, proceed to Postger.py
