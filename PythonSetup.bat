@@ -23,4 +23,4 @@ python .\CreateTables.py
 ECHO Contents of the students table
 docker exec -it student-scraper-postgres psql -U postgres -c "\d+ students"
 
-ECHO Completed pg db and table setup, you may proceed to Poster.py directly as you are in the venv currently
+ECHO Completed pg db and table setup, you may invoke `Python Poster.py` as you are in the virtual environment currently
