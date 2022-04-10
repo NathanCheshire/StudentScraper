@@ -1,25 +1,50 @@
 # StudentScraper 
+
 ## By Nathan Cheshire
 
 Student Scraper is a web scraping tool that uses Python and Selenium to scrape student details from MSU's student directory.
 
-## Setup
+### Setup
 
-For this stack make sure you can execute python scripts and have Docker Desktop installed. We're going to use Docker for the Postgres instance and python for general purpose scripting. Additionally, I have provided a `PostgresSetup.bat` which will do all the work of setting up Postgres and creating the appropriate database and table.
+For this stack, make sure you can execute python scripts and have Docker Desktop installed (WLS is of course recommended). We're going to use Docker for the Postgres instance and python for general purpose scripting. Additionally, I have provided a `PostgresSetup.bat` which will do all the work of setting up Postgres and creating the appropriate database and table.
 
-After the Postgres intance is up and running in a Docker container and you have ensured the database and table were created successfully, place your username and password for MyState inside of `Keys/state.key` in the format: `netid,password`. This will be used with selenium to send a DUO push to obtain cookies which will allow the sending of mass POST requests.
+After the Postgres intance is up and running in a Docker container, and you have ensured the database and table were created successfully, place your username and password for MSU inside of `Keys/state.key` in the format: `netid,password`. This will be used with selenium to send a DUO push to obtain cookies which will allow the sending of mass POST requests. Make sure you accept this DUO push on your phone.
 
-Lastly, assuming everything else is setup, you may invoke `python Poster.py` which will begin the POST sequence and insertions into the Postgres database. I'd recommend you activate the virtual environment via `.\venv\Scripts\Activate.bat` before running the Poster script.
+Lastly, following completion of the stuep, you may invoke `python Poster.py` which will begin the POST sequence and insertions into the Postgres database. I'd recommend you activate the virtual environment via `.\venv\Scripts\Activate.bat` before running the Poster script.
 
-## Method 1: WebCrawling via StudentCrawler.py
+To obtain the lat,lon pairs, obtain a MapQuest API key and use that in combination with `MapQuest.py` to conver the stored addresses into lat,lon pairs. MapQuest free tier only allows 15K queries so you'll most likely need a second account for this step.
 
-This method will simply search through all permutations of first,last containing aa aa, aa ab,...,zz zz, until all student records have been collected and saved to text files. This was my first approach to this problem and is quite inefficient so I would not recommend using `StudentCrawler.py`. This section did, however, teach me a lot about selenium, webscraping, and webcrawling. I was able to figure out how to pass both authentication pages using selenium via this approach.
+### Algorithm 1: Web Crawling
 
-## Method 2: POST requests via Poster.py
+This method will simply search through all permutations of first,last containing aa aa, aa ab,...,zz zz, until all student records have been collected and saved to text files. This is a pretty inefficient approach but is a valid procedural algorithm that will work without missing any names, give enough time.
 
-Directly accessing the backend and sending post requests to acquire data is a much faster and more efficient solution. By making a request in Chrome, one can press f12 and go to the networks tab to see any requests recently made. You can then take the request URL and POST data (formData in this case), and write a script to send POST requests and parse the returned data. First, method 2 starts a selenium instance and authenticates itself. The cookies generated via this authentication are then copied over to the python requests object (it isn't necessary to send them with every POST). Method 2 also inserts all parsed student data into a postgres backend for easy storage/access. Data visualizations with the collected student data can be seen below as well as in `MapGenerator.py`.
+### Algorithm 2: Direct POST Requests
 
-## StudentQueries.sql
+Directly accessing and sending post requests to the MSU backend is a much faster and more efficient solution. By making a request in Chrome, one can press F12 and go to the networks tab to see any requests recently made. You can then take the request URL and POST data (formData in this case), and use that to send POST requests and parse the returned data.
+
+## Files
+
+```
+├── Data # the exported CSV/data files for clients
+├── Drivers # the Selenium Chrome drivers
+├── Figures # exported pngs from visualizations
+├── json # the USA polygon json data
+├── Keys # keys for MSU, MapQuest, Google, etc.
+├── Maps # the exported html Folium renders
+├── Query # scratch sql work
+├── Tables # create table sql files
+├── Visualizations # the visualization scripts
+├── .gitignore
+├── CreateTables.py # the script which creates the initial student table
+├── Poster.py # the POST requestor script
+├── PostgresSetup.bat # the setup batch script
+├── PythonSetup.bat # the python environment setup script
+├── README.md
+├── requirements.txt # the Python requirements
+└── StudentCrawler.py # the web crawler script
+```
+
+### StudentQueries.sql
 
 This is mostly a scratch pad for my testing and debugging purposes.
 
@@ -35,21 +60,25 @@ This script is what I used to query the MapQuest API and convert all of the stud
 
 This is the main data visualization script file. It contains methods such as getting an aerial view of a student's home based soley on their netid, producing a heat map of all students at MSU, and even state by state visualizations for statitistics such as enrollment by state (as one would expect it's extremely biased towards MS since as of 12-8-21, 71.73% of students at MSU have a home address within Mississippi. This stat can be seen in `Data/StudentsByStateNormalized.csv`).
 
-## Examples
+## Results
 
-## Figure 1 - Aerial Address Generation soley from netid
+### Figure 1 - Aerial Address Generation
 
 <img src="https://i.imgur.com/mS6MiE7.png" data-canonical-src="https://i.imgur.com/mS6MiE7.png" width = 400px height = 400px/>
 
-## Figure 2 - Route from netid alpha to netid beta
+<br/>
+
+### Figure 2 - Street Route Plotting
 
 <img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png" width = 400px height = 400px/>
 
-## Figure 3 - Heatmap
+<br/>
 
-Utilizing all of the lat,lon pairs outputed via the `MapQuest.py` script, I used Follium to generate a heatmap of all students who had public addresses that attended MSU during the Fall 2021 semester. The Visualization for this can be seen at the following link: 
+### Figure 3 - Heatmap
+
+Utilizing all of the lat,lon pairs outputed via the `MapQuest.py` script, I used Follium (Python version of leaflet.js) to generate a heatmap of all students who had public addresses that attended MSU during the Fall 2021 semester. The Visualization for this can be seen at the following link: 
 <b>https://nathancheshire.github.io/StudentHeatFall2021<b/>
 
-## Figure 4 - StreetView Visualizations
+### Figure 4 - Google Stree View
 
 As can be seen in `MapGenerator.py`, a method exists called `generateStreetViewImage()`. Using this method, which simply takes a netid, I can produce a figure showing the student a picture of their house as if I was standing outside. In testing this works for upwards of 70% I estimate for all students; a number I find acceptable. I plan to make a backend for this program which can be access via a Cyder account
