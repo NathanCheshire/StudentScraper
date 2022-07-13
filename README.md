@@ -6,11 +6,11 @@ Student Scraper is a web scraping tool that uses Python and Selenium to scrape s
 
 ### Setup
 
-For this stack, make sure you can execute python scripts and have Docker Desktop installed (WLS is of course recommended). We're going to use Docker for the Postgres instance and python for general purpose scripting. Additionally, I have provided a `PostgresSetup.bat` which will do all the work of setting up Postgres and creating the appropriate database and table.
+For this stack, make sure you can execute python scripts and have Docker Desktop installed (WLS is of course recommended). We're going to use Docker for the Postgres instance and Python for general purpose scripting. Additionally, I have provided a `PostgresSetup.bat` which will do all the work of setting up Postgres and creating the appropriate database and table.
 
 After the Postgres intance is up and running in a Docker container, and you have ensured the database and table were created successfully, place your username and password for MSU inside of `Keys/state.key` in the format: `netid,password`. This will be used with selenium to send a DUO push to obtain cookies which will allow the sending of mass POST requests. Make sure you accept this DUO push on your phone.
 
-Lastly, following completion of the stuep, you may invoke `python Poster.py` which will begin the POST sequence and insertions into the Postgres database. I'd recommend you activate the virtual environment via `.\venv\Scripts\Activate.bat` before running the Poster script.
+Lastly, following completion of the setup, you may invoke `Poster.py` which will begin the POSTing sequence and insertions into the Dockerized Postgres instance. Make sure you create and activate the virtual environment via `.\venv\Scripts\Activate.bat` before running the POST script.
 
 To obtain the lat,lon pairs, obtain a MapQuest API key and use that in combination with `MapQuest.py` to conver the stored addresses into lat,lon pairs. MapQuest free tier only allows 15K queries so you'll most likely need a second account for this step.
 
