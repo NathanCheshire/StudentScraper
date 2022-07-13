@@ -8,7 +8,7 @@ def main():
             database = get_current_db(),
             user = 'postgres',
             password = '1234',
-            port = '5432'
+            port = '5150'
         )
         cur = con.cursor()
         cur.execute(open("Tables/create_students.sql", "r").read())
@@ -16,7 +16,9 @@ def main():
         cur.close()
         con.close()
 
-    except Exception as ignored:
+    except Exception as e:
+        print('Exception:')
+        print(e)
         pass
 
     

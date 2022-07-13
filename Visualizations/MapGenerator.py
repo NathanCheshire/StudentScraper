@@ -758,4 +758,5 @@ if __name__ == '__main__':
 
     #createMajorList(majorLike = 'Engineering', database = 'msu_spring_2022')
 
+    generateStreetViewImage(netid='smc884')
     pass

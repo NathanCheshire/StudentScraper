@@ -17,8 +17,8 @@ docker pull postgres
 ECHO Creating volume
 docker volume create student-scraper-postgres
 
-ECHO Running container and binding to port 5432
-docker run -d --name=student-scraper-postgres -p 5432:5432 -v postgres-volume:/var/lib/postgresql/data -e POSTGRES_PASSWORD=1234 postgres
+ECHO Running container and binding port host:5150 to container:5432
+docker run -d --name=student-scraper-postgres -p 5150:5432 -v postgres-volume:/var/lib/postgresql/data -e POSTGRES_PASSWORD=1234 postgres
 
 ECHO Sleeping for 10s to allow database to startup
 
