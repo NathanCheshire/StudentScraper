@@ -35,8 +35,10 @@ Utilizing all of the lat,lon pairs outputed via the `MapQuest.py` script, I used
 
 ### Figure 4 - Google Stree View
 
-As can be seen in `MapGenerator.py`, a method exists called `generateStreetViewImage()`. Using this method, which simply takes a netid, I can produce a figure showing the student a picture of their house as if I was standing outside. In testing this works for <=70% for all students; a number I find acceptable. The lack of absolute correctness comes from google street addressing not always being accurate as well as some people having PO boxes or a [CMRA](https://faq.usps.com/s/article/Mail-Services-at-Non-Postal-Sites-CMRA#:~:text=Provider%20Goes%20Out%20of%20Business,location%20with%20newly%20paid%20postage.). I plan to make the backend I've collected accessible via a Cyder account..
+As can be seen in `MapGenerator.py`, a method exists called `generateStreetViewImage()`. Using this method, which simply takes a netid, I can produce a figure showing the student a picture of their house as if I was standing outside. In testing this works for <=70% for all students; a number I find acceptable. The lack of absolute correctness comes from google street addressing not always being accurate as well as some people having PO boxes or a [CMRA](https://faq.usps.com/s/article/Mail-Services-at-Non-Postal-Sites-CMRA#:~:text=Provider%20Goes%20Out%20of%20Business,location%20with%20newly%20paid%20postage.). I plan to make the backend I've collected accessible via a [Cyder](https://github.com/NathanCheshire/Cyder) account.
 
 <b>Input: lm2112</b>
+<br/>
+<b>Output:</b>
 
 ![](./Figures/lm2112_StreetView.png)
