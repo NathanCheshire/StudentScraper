@@ -20,17 +20,15 @@ To obtain the `lat,lon` pairs which correspond to student addresses, obtain a Ma
 
 <img src="https://i.imgur.com/mS6MiE7.png" data-canonical-src="https://i.imgur.com/mS6MiE7.png" width = 400px height = 400px/>
 
-<br/>
-
 ### Figure 2 - Street Route Plotting
 
 <img src="https://i.imgur.com/GunFwRK.png" data-canonical-src="https://i.imgur.com/GunFwRK.png" width = 400px height = 400px/>
 
-<br/>
-
 ### Figure 3 - Heatmap
 
-Utilizing all of the lat,lon pairs outputed via the `MapQuest.py` script, I used Follium (Python version of Leaflet.js) to generate a heatmap of all students who had public addresses that attended MSU during the Fall 2021 semester. The Visualization for this can be seen [here](https://nathancheshire.github.io/StudentHeatFall2021).
+Utilizing all of the lat,lon pairs outputed via the `MapQuest.py` script, I used Follium (Python version of Leaflet.js) to generate a heatmap of all students who had public addresses that attended MSU during the Fall 2021 semester. The interactive visualization for this can be viewed [here](https://nathancheshire.github.io/StudentHeatFall2021).
+
+![image](https://user-images.githubusercontent.com/60986919/196271151-deb90710-201f-4d3e-afa2-c918a5ac570f.png)
 
 ### Figure 4 - Google Stree View
 
